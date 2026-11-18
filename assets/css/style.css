@@ -1,0 +1,445 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #0b1425;
+    color: #eaf2ff;
+    display: flex;
+}
+
+/* MENU BÊN TRÁI */
+
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    background: #101d32;
+    padding: 25px 18px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    border-right: 1px solid #20334f;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 17px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 45px;
+}
+
+.logo-icon {
+    background: #00c9df;
+    color: #071525;
+    padding: 9px 12px;
+    border-radius: 9px;
+}
+
+.menu-title {
+    font-size: 11px;
+    color: #71849f;
+    margin-bottom: 15px;
+}
+
+.menu-item {
+    display: block;
+    padding: 14px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    color: #a9bad1;
+    text-decoration: none;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.menu-item:hover,
+.menu-item.active {
+    background: #173653;
+    color: #00d5ed;
+}
+
+.sidebar-bottom {
+    position: absolute;
+    bottom: 25px;
+    color: #8498b2;
+    font-size: 11px;
+    line-height: 2;
+}
+
+/* NỘI DUNG CHÍNH */
+
+.main-content {
+    margin-left: 250px;
+    width: calc(100% - 250px);
+    padding: 30px;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.topbar h2 {
+    font-size: 23px;
+    margin-bottom: 7px;
+}
+
+.topbar p {
+    color: #8295af;
+    font-size: 13px;
+}
+
+.admin {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.admin small {
+    display: block;
+    color: #8498b2;
+    margin-top: 5px;
+}
+
+.avatar {
+    width: 42px;
+    height: 42px;
+    background: #00c9df;
+    color: #081525;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: bold;
+}
+
+/* KHUNG CHÀO MỪNG */
+
+.welcome {
+    background: linear-gradient(110deg, #123653, #142b4b);
+    border: 1px solid #245276;
+    border-radius: 13px;
+    padding: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.welcome h1 {
+    font-size: 23px;
+    margin-bottom: 10px;
+}
+
+.welcome p {
+    color: #a9c2d9;
+    font-size: 13px;
+}
+
+.welcome-icon {
+    font-size: 50px;
+    color: #00d5ed;
+}
+
+/* THẺ THỐNG KÊ */
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: #142238;
+    border: 1px solid #233751;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 17px;
+    font-size: 18px;
+}
+
+.blue {
+    background: #173f64;
+    color: #42b8ff;
+}
+
+.green {
+    background: #164c40;
+    color: #43e2ad;
+}
+
+.orange {
+    background: #554020;
+    color: #ffbd62;
+}
+
+.red {
+    background: #542c39;
+    color: #ff8297;
+}
+
+.stat-card p {
+    color: #a4b5ca;
+    font-size: 13px;
+}
+
+.stat-card h2 {
+    font-size: 27px;
+    margin: 10px 0;
+}
+
+.stat-card small {
+    color: #7389a5;
+    font-size: 11px;
+}
+
+/* KHU VỰC HOẠT ĐỘNG */
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 20px;
+}
+
+.panel {
+    background: #142238;
+    border: 1px solid #233751;
+    border-radius: 12px;
+    padding: 22px;
+}
+
+.panel-heading {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 22px;
+}
+
+.panel-heading h3 {
+    font-size: 16px;
+}
+
+.panel-heading span {
+    color: #8195af;
+    font-size: 12px;
+}
+
+.activity {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 15px 0;
+    border-top: 1px solid #26374e;
+}
+
+.activity strong {
+    font-size: 13px;
+}
+
+.activity p {
+    font-size: 12px;
+    color: #91a4bc;
+    margin-top: 6px;
+}
+
+.activity small {
+    margin-left: auto;
+    color: #8195af;
+    font-size: 11px;
+}
+
+.dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    margin-top: 4px;
+}
+
+.green-dot { background: #43e2ad; }
+.blue-dot { background: #42b8ff; }
+.orange-dot { background: #ffbd62; }
+
+/* CẢNH BÁO */
+
+.alert {
+    padding: 13px;
+    border-radius: 8px;
+    background: #1b2b40;
+    margin-bottom: 12px;
+}
+
+.alert strong {
+    font-size: 13px;
+    color: #ffbd62;
+}
+
+.alert p {
+    font-size: 12px;
+    color: #9aacc1;
+    margin-top: 6px;
+}
+
+/* CHÂN TRANG */
+
+footer {
+    margin-top: 30px;
+    text-align: center;
+    color: #687f9c;
+    font-size: 11px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1000px) {
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 650px) {
+    .sidebar {
+        width: 190px;
+    }
+
+    .main-content {
+        margin-left: 190px;
+        width: calc(100% - 190px);
+        padding: 15px;
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .welcome h1 {
+        font-size: 18px;
+    }
+}
+
+/* ==========================
+   TRANG DANG NHAP
+========================== */
+
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background:
+        radial-gradient(circle at top, #173653, #0b1425 65%);
+}
+
+.login-card {
+    width: 100%;
+    max-width: 430px;
+    padding: 38px;
+    background: #142238;
+    border: 1px solid #29415f;
+    border-radius: 18px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+
+.login-logo {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 20px;
+    display: grid;
+    place-items: center;
+    background: #00c9df;
+    color: #071525;
+    border-radius: 14px;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.login-card h1 {
+    text-align: center;
+    font-size: 24px;
+    color: #ffffff;
+    letter-spacing: 1px;
+}
+
+.login-subtitle {
+    text-align: center;
+    color: #91a8c2;
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 12px 0 28px;
+}
+
+.login-card label {
+    display: block;
+    color: #c7d5e5;
+    font-size: 13px;
+    margin: 18px 0 9px;
+}
+
+.login-card input {
+    width: 100%;
+    padding: 14px;
+    background: #0c192c;
+    color: #ffffff;
+    border: 1px solid #2a405b;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+}
+
+.login-card input:focus {
+    border-color: #00c9df;
+}
+
+.login-button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 25px;
+    background: #00c9df;
+    color: #071525;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.login-button:hover {
+    background: #48e5f2;
+}
+
+.login-error {
+    padding: 12px;
+    background: #542c39;
+    border: 1px solid #a94c62;
+    color: #ffb5c1;
+    font-size: 13px;
+    border-radius: 8px;
+}
+
+.login-footer {
+    text-align: center;
+    color: #6f849e;
+    font-size: 11px;
+    margin-top: 28px;
+}

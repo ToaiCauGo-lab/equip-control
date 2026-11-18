@@ -1,0 +1,462 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    background: #07111f;
+    color: #ffffff;
+    min-height: 100vh;
+}
+
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 35px;
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at 15% 20%, rgba(0, 170, 220, 0.13), transparent 38%),
+        radial-gradient(ellipse at 90% 85%, rgba(0, 100, 200, 0.13), transparent 35%),
+        #07111f;
+}
+
+.background-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    pointer-events: none;
+}
+
+.glow-one {
+    width: 300px;
+    height: 300px;
+    background: rgba(0, 190, 230, 0.12);
+    top: -100px;
+    left: -80px;
+}
+
+.glow-two {
+    width: 350px;
+    height: 350px;
+    background: rgba(0, 100, 220, 0.12);
+    bottom: -150px;
+    right: -100px;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 1080px;
+    min-height: 640px;
+    display: grid;
+    grid-template-columns: 1.08fr 0.92fr;
+    background: #101e30;
+    border: 1px solid rgba(133, 190, 220, 0.15);
+    border-radius: 22px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.4);
+}
+
+/* PHẦN GIỚI THIỆU */
+
+.brand-section {
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(145deg, rgba(0, 150, 200, 0.13), transparent 55%),
+        #0b1929;
+    border-right: 1px solid rgba(130, 190, 220, 0.1);
+}
+
+.brand-section::after {
+    content: "";
+    position: absolute;
+    width: 350px;
+    height: 350px;
+    border: 1px solid rgba(0, 190, 230, 0.1);
+    border-radius: 50%;
+    right: -180px;
+    bottom: -160px;
+    box-shadow:
+        0 0 0 35px rgba(0, 190, 230, 0.025),
+        0 0 0 70px rgba(0, 190, 230, 0.02);
+}
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.logo-icon {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #00c6e8, #0879d7);
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 17px;
+    box-shadow: 0 5px 22px rgba(0, 190, 230, 0.25);
+}
+
+.logo-name {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 1.3px;
+}
+
+.logo-name span {
+    color: #00c5e8;
+}
+
+.brand-content {
+    margin-top: 45px;
+    margin-bottom: 45px;
+    position: relative;
+    z-index: 1;
+}
+
+.eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #75cce3;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin-bottom: 27px;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    background: #00d6a0;
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(0, 214, 160, 0.7);
+}
+
+.brand-content h1 {
+    font-size: 34px;
+    line-height: 1.5;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    margin-bottom: 20px;
+}
+
+.brand-content p {
+    color: #9aafc3;
+    font-size: 13px;
+    line-height: 2;
+    max-width: 400px;
+}
+
+.feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-top: 35px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    color: #c6d6e4;
+    font-size: 12px;
+}
+
+.feature-icon {
+    width: 23px;
+    height: 23px;
+    border-radius: 7px;
+    background: rgba(0, 197, 232, 0.12);
+    color: #00c5e8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+}
+
+.brand-footer {
+    color: #536c83;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+}
+
+.brand-footer span {
+    color: #00c5e8;
+    margin: 0 5px;
+}
+
+/* PHẦN ĐĂNG NHẬP */
+
+.form-section {
+    padding: 55px 48px 35px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: #101e30;
+}
+
+.form-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 48px;
+}
+
+.form-label {
+    color: #00c5e8;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.secure-label {
+    color: #7d96ad;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+}
+
+.form-heading {
+    margin-bottom: 32px;
+}
+
+.form-heading h2 {
+    font-size: 30px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.form-heading p {
+    color: #8da3b8;
+    font-size: 12px;
+}
+
+.input-group {
+    margin-bottom: 23px;
+}
+
+.input-group label {
+    display: block;
+    color: #a9bed0;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    margin-bottom: 11px;
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    height: 53px;
+    padding: 0 15px;
+    border: 1px solid #293e53;
+    border-radius: 9px;
+    background: #0b1929;
+    transition: 0.25s;
+}
+
+.input-wrapper:focus-within {
+    border-color: #00bde3;
+    box-shadow: 0 0 0 3px rgba(0, 189, 227, 0.09);
+}
+
+.input-icon {
+    color: #00c5e8;
+    font-size: 19px;
+    width: 28px;
+}
+
+.input-wrapper input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 12px;
+}
+
+.input-wrapper input::placeholder {
+    color: #52687d;
+}
+
+.toggle-password {
+    background: transparent;
+    border: none;
+    color: #00c5e8;
+    font-family: inherit;
+    font-size: 10px;
+    cursor: pointer;
+    padding: 7px;
+}
+
+.login-button {
+    width: 100%;
+    height: 53px;
+    margin-top: 9px;
+    border: none;
+    border-radius: 9px;
+    background: linear-gradient(110deg, #00bfe4, #087edb);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(0, 160, 220, 0.2);
+    transition: 0.25s;
+}
+
+.login-button span {
+    margin-left: 12px;
+    font-size: 17px;
+}
+
+.login-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(0, 160, 220, 0.32);
+    filter: brightness(1.08);
+}
+
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    margin-bottom: 22px;
+    border: 1px solid rgba(255, 90, 90, 0.25);
+    border-radius: 8px;
+    background: rgba(255, 75, 75, 0.08);
+    color: #ff9292;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.error-message span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #e75a5a;
+    color: white;
+    font-weight: 800;
+}
+
+.form-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 40px;
+    color: #647e94;
+    font-size: 8px;
+    letter-spacing: 1.1px;
+    white-space: nowrap;
+}
+
+.bottom-line {
+    height: 1px;
+    flex: 1;
+    background: #26394d;
+}
+
+.copyright {
+    text-align: center;
+    color: #50677d;
+    font-size: 8px;
+    letter-spacing: 0.7px;
+    margin-top: 35px;
+}
+
+/* GIAO DIỆN ĐIỆN THOẠI */
+
+@media (max-width: 850px) {
+    .login-page {
+        padding: 20px;
+    }
+
+    .login-container {
+        max-width: 500px;
+        grid-template-columns: 1fr;
+    }
+
+    .brand-section {
+        padding: 30px;
+        min-height: auto;
+    }
+
+    .brand-content {
+        margin: 35px 0 20px;
+    }
+
+    .brand-content h1 {
+        font-size: 27px;
+    }
+
+    .brand-content p {
+        font-size: 12px;
+    }
+
+    .feature-list {
+        gap: 12px;
+        margin-top: 23px;
+    }
+
+    .brand-footer {
+        display: none;
+    }
+
+    .form-section {
+        padding: 35px 30px;
+    }
+
+    .form-top {
+        margin-bottom: 30px;
+    }
+}
+
+@media (max-width: 450px) {
+    .login-page {
+        padding: 12px;
+    }
+
+    .brand-section {
+        padding: 25px;
+    }
+
+    .form-section {
+        padding: 30px 25px;
+    }
+
+    .brand-content h1 {
+        font-size: 24px;
+    }
+
+    .form-heading h2 {
+        font-size: 26px;
+    }
+}
