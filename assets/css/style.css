@@ -1,18 +1,77 @@
 
+/* =====================================================
+   EQUIP CONTROL - MAIN STYLE
+   GIAO DIỆN XANH ĐEN - CYAN
+   ===================================================== */
+
+/* ================= RESET ================= */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-body {
-    font-family: Arial, sans-serif;
-    background: #0b1425;
-    color: #eaf2ff;
-    display: flex;
+html {
+    min-height: 100%;
+    scroll-behavior: smooth;
 }
 
-/* MENU BÊN TRÁI */
+body {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    background: #0b1425;
+    color: #eaf2ff;
+    min-height: 100vh;
+}
+
+/* ================= CỠ CHỮ CHUNG ================= */
+
+h1 {
+    font-size: 24px;
+    line-height: 1.4;
+    font-weight: 700;
+}
+
+h2 {
+    font-size: 20px;
+    line-height: 1.4;
+    font-weight: 700;
+}
+
+h3 {
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 600;
+}
+
+h4 {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+p {
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+small {
+    font-size: 11px;
+}
+
+label {
+    font-size: 13px;
+}
+
+input,
+select,
+textarea,
+button {
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+}
+
+/* ================= SIDEBAR ================= */
 
 .sidebar {
     width: 250px;
@@ -22,7 +81,11 @@ body {
     position: fixed;
     left: 0;
     top: 0;
+    bottom: 0;
     border-right: 1px solid #20334f;
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1000;
 }
 
 .logo {
@@ -50,12 +113,12 @@ body {
 
 .menu-item {
     display: block;
-    padding: 14px;
+    padding: 13px 14px;
     margin-bottom: 8px;
     border-radius: 8px;
     color: #a9bad1;
     text-decoration: none;
-    font-size: 14px;
+    font-size: 13px;
     transition: 0.2s;
 }
 
@@ -73,19 +136,25 @@ body {
     line-height: 2;
 }
 
-/* NỘI DUNG CHÍNH */
+/* ================= NỘI DUNG CHÍNH ================= */
 
 .main-content {
+    display: block;
     margin-left: 250px;
     width: calc(100% - 250px);
+    min-height: 100vh;
     padding: 30px;
+    background: #0b1425;
 }
+
+/* ================= TOPBAR ================= */
 
 .topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
+    gap: 15px;
 }
 
 .topbar h2 {
@@ -122,7 +191,7 @@ body {
     font-weight: bold;
 }
 
-/* KHUNG CHÀO MỪNG */
+/* ================= KHUNG CHÀO MỪNG ================= */
 
 .welcome {
     background: linear-gradient(110deg, #123653, #142b4b);
@@ -150,7 +219,7 @@ body {
     color: #00d5ed;
 }
 
-/* THẺ THỐNG KÊ */
+/* ================= THẺ THỐNG KÊ ================= */
 
 .stats {
     display: grid;
@@ -211,7 +280,7 @@ body {
     font-size: 11px;
 }
 
-/* KHU VỰC HOẠT ĐỘNG */
+/* ================= KHU VỰC HOẠT ĐỘNG ================= */
 
 .content-grid {
     display: grid;
@@ -229,7 +298,9 @@ body {
 .panel-heading {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 22px;
+    gap: 12px;
 }
 
 .panel-heading h3 {
@@ -272,11 +343,19 @@ body {
     margin-top: 4px;
 }
 
-.green-dot { background: #43e2ad; }
-.blue-dot { background: #42b8ff; }
-.orange-dot { background: #ffbd62; }
+.green-dot {
+    background: #43e2ad;
+}
 
-/* CẢNH BÁO */
+.blue-dot {
+    background: #42b8ff;
+}
+
+.orange-dot {
+    background: #ffbd62;
+}
+
+/* ================= CẢNH BÁO ================= */
 
 .alert {
     padding: 13px;
@@ -296,7 +375,101 @@ body {
     margin-top: 6px;
 }
 
-/* CHÂN TRANG */
+/* ================= FORM ================= */
+
+input,
+select,
+textarea {
+    background: #0c192c;
+    color: #eaf2ff;
+    border: 1px solid #304963;
+    border-radius: 7px;
+    padding: 11px 12px;
+    outline: none;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #00c9df;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #71849f;
+}
+
+select option {
+    background: #142238;
+    color: #eaf2ff;
+}
+
+/* ================= BUTTON ================= */
+
+button,
+.btn {
+    font-size: 13px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:disabled,
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ================= TABLE ================= */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+th {
+    color: #a9bfd5;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    padding: 13px 12px;
+    background: #172942;
+    border-bottom: 1px solid #30445f;
+}
+
+td {
+    color: #d7e3f1;
+    font-size: 13px;
+    padding: 12px;
+    border-bottom: 1px solid #26374e;
+}
+
+tr:hover td {
+    background: rgba(35, 65, 95, 0.2);
+}
+
+/* ================= BADGE / TRẠNG THÁI ================= */
+
+.badge,
+.status,
+.status-badge {
+    display: inline-block;
+    font-size: 12px;
+    padding: 5px 9px;
+    border-radius: 6px;
+}
+
+/* ================= THÔNG BÁO ================= */
+
+.password-alert,
+.message,
+.notification {
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* ================= CHÂN TRANG ================= */
 
 footer {
     margin-top: 30px;
@@ -305,41 +478,7 @@ footer {
     font-size: 11px;
 }
 
-/* RESPONSIVE */
-
-@media (max-width: 1000px) {
-    .stats {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .content-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 650px) {
-    .sidebar {
-        width: 190px;
-    }
-
-    .main-content {
-        margin-left: 190px;
-        width: calc(100% - 190px);
-        padding: 15px;
-    }
-
-    .stats {
-        grid-template-columns: 1fr;
-    }
-
-    .welcome h1 {
-        font-size: 18px;
-    }
-}
-
-/* ==========================
-   TRANG DANG NHAP
-========================== */
+/* ================= TRANG ĐĂNG NHẬP ================= */
 
 .login-page {
     min-height: 100vh;
@@ -347,8 +486,7 @@ footer {
     justify-content: center;
     align-items: center;
     padding: 20px;
-    background:
-        radial-gradient(circle at top, #173653, #0b1425 65%);
+    background: radial-gradient(circle at top, #173653, #0b1425 65%);
 }
 
 .login-card {
@@ -442,4 +580,65 @@ footer {
     color: #6f849e;
     font-size: 11px;
     margin-top: 28px;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 1000px) {
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 220px;
+    }
+
+    .main-content {
+        margin-left: 220px;
+        width: calc(100% - 220px);
+        padding: 20px;
+    }
+}
+
+@media (max-width: 650px) {
+    .sidebar {
+        width: 190px;
+        padding: 18px 12px;
+    }
+
+    .main-content {
+        margin-left: 190px;
+        width: calc(100% - 190px);
+        padding: 15px;
+    }
+
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .welcome {
+        padding: 18px;
+    }
+
+    .welcome h1 {
+        font-size: 18px;
+    }
+
+    .welcome-icon {
+        font-size: 35px;
+    }
+
+    .topbar {
+        flex-wrap: wrap;
+    }
+
+    .password-card {
+        padding: 18px;
+    }
 }
