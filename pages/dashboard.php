@@ -147,7 +147,6 @@ $recentTransactions = $conn->query("
 $totalAlerts = count($lowStockItems)
              + count($overdueBorrows)
              + count($overdueMaintenance);
-
 ?>
 
 <!DOCTYPE html>
@@ -155,262 +154,100 @@ $totalAlerts = count($lowStockItems)
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Tổng quan - EQUIP CONTROL</title>
 
-<link rel="stylesheet" href="/equip-control/assets/css/unified.css">
+<link rel="stylesheet" href="../assets/css/style.css?v=14">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+
 * { box-sizing: border-box; }
-
-body {
+html, body {
     margin: 0;
-    background: #0b1220;
-    color: #f1f5f9;
-    font-family: Arial, sans-serif;
+    padding: 0;
+    min-height: 100%;
+    background: #0b1120 !important;
+    color: #e5edf8;
 }
-
+body { display: block !important; overflow-x: hidden; }
 .sidebar {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
+    bottom: 0 !important;
     width: 250px !important;
     height: 100vh !important;
     overflow-y: auto !important;
     z-index: 1000 !important;
+    margin: 0 !important;
 }
 
 .main-content.dashboard-page {
+    position: relative !important;
+    display: block !important;
     margin-left: 250px !important;
+    margin-top: 0 !important;
     width: calc(100% - 250px) !important;
+    min-width: 0 !important;
     min-height: 100vh;
-    padding: 25px 30px;
+    padding: 25px !important;
+    background: #0b1120 !important;
+    box-sizing: border-box !important;
 }
-
 .welcome-box {
-    background: linear-gradient(120deg, #102c43, #12263a);
-    border: 1px solid #29445c;
-    border-radius: 14px;
-    padding: 25px;
-    margin-bottom: 28px;
+    background: #111f31;
+    border: 1px solid #263b52;
+    border-radius: 12px;
+    padding: 21px;
+    margin-bottom: 22px;
 }
-
-.welcome-box h2 {
-    color: #22d3ee;
-    font-size: 23px;
-    margin: 0 0 10px;
+.welcome-box h2 { color: #22d3ee; font-size: 24px; line-height: 1.35; margin: 0 0 8px; }
+.welcome-box p { color: #91a6bd; font-size: 13px; line-height: 1.6; margin: 0; }
+.section-title { font-size: 16px; line-height: 1.4; font-weight: bold; margin: 25px 0 16px; color: #f1f5f9; }
+.stats-grid, .quick-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; }
+.stat-card, .quick-card, .chart-card, .table-card, .alert-card {
+    background: #111f31; border: 1px solid #263b52; border-radius: 12px;
 }
-
-.welcome-box p {
-    color: #a8c3dd;
-    margin: 0;
-    font-size: 14px;
-}
-
-.section-title {
-    font-size: 19px;
-    font-weight: bold;
-    margin: 27px 0 18px;
-    color: #f8fafc;
-}
-
-.stats-grid, .quick-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
-}
-
-.stat-card, .quick-card, .chart-card, .table-card {
-    background: #111f30;
-    border: 1px solid #263d55;
-    border-radius: 13px;
-}
-
-.stat-card {
-    padding: 23px;
-    min-height: 115px;
-}
-
-.stat-label {
-    color: #9bb5cf;
-    font-size: 13px;
-    margin-bottom: 13px;
-}
-
-.stat-number {
-    font-size: 30px;
-    font-weight: bold;
-    color: #22d3ee;
-}
-
+.stat-card { padding: 19px; min-height: 100px; }
+.stat-label { color: #91a6bd; font-size: 12px; margin-bottom: 10px; }
+.stat-number { font-size: 25px; font-weight: bold; color: #22d3ee; }
 .stat-card.warning .stat-number { color: #fbbf24; }
-
-.quick-card {
-    display: block;
-    text-decoration: none;
-    padding: 20px;
-    transition: .2s;
-}
-
-.quick-card:hover {
-    border-color: #22d3ee;
-    transform: translateY(-3px);
-    background: #15283d;
-}
-
-.quick-card h3 {
-    color: #22d3ee;
-    font-size: 15px;
-    margin: 0 0 10px;
-}
-
-.quick-card p {
-    color: #9bb5cf;
-    font-size: 13px;
-    margin: 0;
-    line-height: 1.5;
-}
-
-.alert-summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    background: #182638;
-    border: 1px solid #344b62;
-    border-radius: 12px;
-    padding: 17px 20px;
-    margin-bottom: 16px;
-}
-
-.alert-summary strong {
-    color: #fbbf24;
-    font-size: 24px;
-}
-
-.alert-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-}
-
-.alert-card {
-    background: #111f30;
-    border: 1px solid #344b62;
-    border-radius: 12px;
-    padding: 18px;
-    min-width: 0;
-}
-
-.alert-card h3 {
-    font-size: 15px;
-    margin: 0 0 14px;
-}
-
+.quick-card { display: block; text-decoration: none; padding: 19px; transition: .2s; }
+.quick-card:hover { border-color: #22d3ee; transform: translateY(-2px); background: #15283d; }
+.quick-card h3 { color: #22d3ee; font-size: 16px; line-height: 1.4; margin: 0 0 9px; }
+.quick-card p { color: #91a6bd; font-size: 12px; line-height: 1.6; margin: 0; }
+.alert-summary { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; background: #111f31; border: 1px solid #263b52; border-radius: 12px; padding: 17px 20px; margin-bottom: 16px; }
+.alert-summary strong { color: #fbbf24; font-size: 25px; }
+.alert-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+.alert-card { padding: 18px; min-width: 0; }
+.alert-card h3 { font-size: 16px; line-height: 1.4; margin: 0 0 14px; }
 .alert-card.danger { border-left: 4px solid #f87171; }
 .alert-card.warning { border-left: 4px solid #fbbf24; }
 .alert-card.info { border-left: 4px solid #22d3ee; }
-
-.alert-item {
-    padding: 11px 0;
-    border-bottom: 1px solid #263d55;
-    color: #cbd5e1;
-    font-size: 13px;
-    line-height: 1.6;
-}
-
+.alert-item { padding: 11px 0; border-bottom: 1px solid #263b52; color: #d4e1ef; font-size: 12px; line-height: 1.6; }
 .alert-item:last-child { border-bottom: none; }
-
 .alert-item strong { color: #f8fafc; }
-
-.alert-empty {
-    color: #4ade80;
-    font-size: 13px;
-    padding: 10px 0;
-}
-
-.charts-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-}
-
-.chart-card {
-    padding: 20px;
-    min-width: 0;
-}
-
-.chart-card h3 {
-    color: #e2e8f0;
-    font-size: 15px;
-    margin: 0 0 18px;
-}
-
-.chart-container {
-    position: relative;
-    height: 260px;
-}
-
-.table-card {
-    padding: 20px;
-    overflow-x: auto;
-}
-
-.dashboard-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 550px;
-}
-
-.dashboard-table th, .dashboard-table td {
-    padding: 13px 12px;
-    text-align: left;
-    border-bottom: 1px solid #263d55;
-    font-size: 13px;
-}
-
-.dashboard-table th {
-    color: #22d3ee;
-}
-
-.dashboard-table td { color: #cbd5e1; }
-
-.type-import {
-    color: #4ade80 !important;
-    font-weight: bold;
-}
-
-.type-export {
-    color: #fb923c !important;
-    font-weight: bold;
-}
-
-.empty-data {
-    text-align: center !important;
-    color: #94a3b8 !important;
-    padding: 25px !important;
-}
-
-@media (max-width: 1000px) {
-    .stats-grid, .quick-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
+.alert-empty { color: #4ade80; font-size: 12px; padding: 10px 0; }
+.charts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+.chart-card { padding: 20px; min-width: 0; }
+.chart-card h3 { color: #e2e8f0; font-size: 16px; line-height: 1.4; margin: 0 0 16px; }
+.chart-container { position: relative; height: 260px; }
+.table-card { padding: 20px; overflow-x: auto; }
+.dashboard-table { width: 100%; border-collapse: collapse; min-width: 550px; }
+.dashboard-table th, .dashboard-table td { padding: 13px 11px; text-align: left; border-bottom: 1px solid #263b52; font-size: 12px; }
+.dashboard-table th { color: #22d3ee; background: #17283c; }
+.dashboard-table td { color: #d4e1ef; }
+.type-import { color: #4ade80 !important; font-weight: bold; }
+.type-export { color: #fb923c !important; font-weight: bold; }
+.empty-data { text-align: center !important; color: #91a6bd !important; padding: 25px !important; }
+@media (max-width: 1000px) { .stats-grid, .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 768px) {
-    .sidebar { width: 210px !important; }
-
-    .main-content.dashboard-page {
-        margin-left: 210px !important;
-        width: calc(100% - 210px) !important;
-        padding: 20px 12px;
-    }
-
-    .stats-grid, .quick-grid, .charts-grid, .alert-grid {
-        grid-template-columns: 1fr;
-    }
+    .sidebar { width: 220px !important; }
+    .main-content.dashboard-page { margin-left: 220px !important; width: calc(100% - 220px) !important; padding: 16px !important; }
+    .stats-grid, .quick-grid, .charts-grid, .alert-grid { grid-template-columns: 1fr; }
 }
+
 </style>
 </head>
 
@@ -422,7 +259,7 @@ body {
 
 <div class="welcome-box">
     <h2>Xin chào, <?= h($role === "admin" ? "Quản trị viên" : $fullName) ?>!</h2>
-    <p>Chào mừng mày quay lại hệ thống quản lý thiết bị và linh kiện điện tử.</p>
+    <p>Chào mừng bạn quay lại hệ thống quản lý thiết bị và linh kiện điện tử.</p>
 </div>
 
 <h2 class="section-title">TỔNG QUAN HỆ THỐNG</h2>
@@ -459,7 +296,6 @@ body {
     </div>
 </div>
 
-<!-- KHU VỰC CẢNH BÁO -->
 <h2 class="section-title">🚨 CẢNH BÁO HỆ THỐNG</h2>
 
 <div class="alert-summary">
@@ -548,7 +384,6 @@ body {
 
 </div>
 
-<!-- BIỂU ĐỒ -->
 <h2 class="section-title">BIỂU ĐỒ THỐNG KÊ</h2>
 
 <div class="charts-grid">
@@ -573,49 +408,47 @@ body {
     </div>
 </div>
 
-<!-- TRUY CẬP NHANH -->
 <h2 class="section-title">TRUY CẬP NHANH</h2>
 
 <div class="quick-grid">
-    <a href="/equip-control/devices.php" class="quick-card">
+    <a href="/devices.php" class="quick-card">
         <h3>💻 Quản lý thiết bị</h3>
         <p>Thêm, sửa, xóa và theo dõi thiết bị.</p>
     </a>
 
-    <a href="/equip-control/components.php" class="quick-card">
+    <a href="/components.php" class="quick-card">
         <h3>🔧 Quản lý linh kiện</h3>
         <p>Quản lý thông tin và số lượng linh kiện.</p>
     </a>
 
-    <a href="/equip-control/stock.php" class="quick-card">
+    <a href="/stock.php" class="quick-card">
         <h3>📦 Nhập - xuất kho</h3>
         <p>Quản lý lịch sử nhập và xuất linh kiện.</p>
     </a>
 
-    <a href="/equip-control/borrow.php" class="quick-card">
+    <a href="/borrow.php" class="quick-card">
         <h3>🔄 Mượn - trả</h3>
         <p>Theo dõi thiết bị đang được mượn.</p>
     </a>
 
-    <a href="/equip-control/maintenance.php" class="quick-card">
+    <a href="/maintenance.php" class="quick-card">
         <h3>🛠️ Bảo trì thiết bị</h3>
         <p>Quản lý tình trạng và chi phí bảo trì.</p>
     </a>
 
-    <a href="/equip-control/reports.php" class="quick-card">
+    <a href="/reports.php" class="quick-card">
         <h3>📈 Báo cáo - thống kê</h3>
         <p>Xem số liệu hoạt động của hệ thống.</p>
     </a>
 
     <?php if ($role === "admin"): ?>
-    <a href="/equip-control/users.php" class="quick-card">
+    <a href="/users.php" class="quick-card">
         <h3>👥 Quản lý tài khoản</h3>
         <p>Tạo, chỉnh sửa, khóa và mở khóa tài khoản.</p>
     </a>
     <?php endif; ?>
 </div>
 
-<!-- GIAO DỊCH GẦN ĐÂY -->
 <h2 class="section-title">GIAO DỊCH KHO GẦN ĐÂY</h2>
 
 <div class="table-card">
@@ -643,7 +476,9 @@ body {
         </tr>
         <?php endforeach; ?>
     <?php else: ?>
-        <tr><td colspan="5" class="empty-data">Chưa có giao dịch kho nào.</td></tr>
+        <tr>
+            <td colspan="5" class="empty-data">Chưa có giao dịch kho nào.</td>
+        </tr>
     <?php endif; ?>
     </tbody>
 </table>
@@ -653,7 +488,7 @@ body {
 
 <script>
 Chart.defaults.color = "#a8bfd5";
-Chart.defaults.font.family = "Arial";
+Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
 
 const deviceLabels = <?= json_encode($deviceLabels, JSON_UNESCAPED_UNICODE) ?>;
 const deviceValues = <?= json_encode($deviceValues) ?>;
@@ -676,7 +511,9 @@ new Chart(document.getElementById("deviceChart"), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: "bottom" } }
+        plugins: {
+            legend: { position: "bottom" }
+        }
     }
 });
 
@@ -693,7 +530,9 @@ new Chart(document.getElementById("borrowChart"), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: "bottom" } }
+        plugins: {
+            legend: { position: "bottom" }
+        }
     }
 });
 
@@ -720,10 +559,17 @@ new Chart(document.getElementById("stockChart"), {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-            x: { grid: { color: "rgba(148,163,184,.12)" } },
-            y: { beginAtZero: true, grid: { color: "rgba(148,163,184,.12)" } }
+            x: {
+                grid: { color: "rgba(148,163,184,.12)" }
+            },
+            y: {
+                beginAtZero: true,
+                grid: { color: "rgba(148,163,184,.12)" }
+            }
         },
-        plugins: { legend: { position: "bottom" } }
+        plugins: {
+            legend: { position: "bottom" }
+        }
     }
 });
 
@@ -748,10 +594,17 @@ new Chart(document.getElementById("summaryChart"), {
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-            x: { grid: { display: false } },
-            y: { beginAtZero: true, grid: { color: "rgba(148,163,184,.12)" } }
+            x: {
+                grid: { display: false }
+            },
+            y: {
+                beginAtZero: true,
+                grid: { color: "rgba(148,163,184,.12)" }
+            }
         },
-        plugins: { legend: { display: false } }
+        plugins: {
+            legend: { display: false }
+        }
     }
 });
 </script>
