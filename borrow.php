@@ -18,12 +18,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $action = $_POST["action"] ?? "";
 
     try {
-
-        // =========================
         // TẠO PHIẾU MƯỢN
-        // =========================
         if ($action === "borrow") {
-
             $deviceId = (int)($_POST["device_id"] ?? 0);
             $borrowerName = trim($_POST["borrower_name"] ?? "");
             $borrowerContact = trim($_POST["borrower_contact"] ?? "");
@@ -50,7 +46,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $conn->beginTransaction();
 
-            // Khóa thiết bị trong quá trình xử lý
             $stmt = $conn->prepare("
                 SELECT id, device_code, device_name, quantity, unit, status
                 FROM devices
@@ -58,7 +53,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 FOR UPDATE
             ");
             $stmt->execute([$deviceId]);
-
             $device = $stmt->fetch();
 
             if (!$device) {
@@ -78,7 +72,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 );
             }
 
-            // Trừ số lượng thiết bị
             $update = $conn->prepare("
                 UPDATE devices
                 SET quantity = quantity - ?
@@ -86,7 +79,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ");
             $update->execute([$quantity, $deviceId]);
 
-            // Tạo phiếu mượn
             $insert = $conn->prepare("
                 INSERT INTO borrow_records
                 (
@@ -113,10 +105,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             ]);
 
             $borrowId = (int)$conn->lastInsertId();
-
             $conn->commit();
 
-            // GHI NHẬT KÝ
             logActivity(
                 $conn,
                 "Mượn thiết bị",
@@ -129,11 +119,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $message = "Tạo phiếu mượn thiết bị thành công!";
 
-        // =========================
         // XÁC NHẬN TRẢ THIẾT BỊ
-        // =========================
         } elseif ($action === "return") {
-
             $borrowId = (int)($_POST["borrow_id"] ?? 0);
             $actualReturnDate = $_POST["actual_return_date"] ?? date("Y-m-d");
 
@@ -147,7 +134,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $conn->beginTransaction();
 
-            // Khóa phiếu mượn
             $stmt = $conn->prepare("
                 SELECT *
                 FROM borrow_records
@@ -155,7 +141,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 FOR UPDATE
             ");
             $stmt->execute([$borrowId]);
-
             $borrow = $stmt->fetch();
 
             if (!$borrow) {
@@ -170,7 +155,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 throw new Exception("Ngày trả không được trước ngày mượn.");
             }
 
-            // Khóa thiết bị
             $deviceStmt = $conn->prepare("
                 SELECT id, device_code, device_name, unit
                 FROM devices
@@ -178,14 +162,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 FOR UPDATE
             ");
             $deviceStmt->execute([$borrow["device_id"]]);
-
             $device = $deviceStmt->fetch();
 
             if (!$device) {
                 throw new Exception("Không tìm thấy thiết bị liên quan đến phiếu mượn.");
             }
 
-            // Cộng lại số lượng thiết bị
             $updateDevice = $conn->prepare("
                 UPDATE devices
                 SET quantity = quantity + ?
@@ -196,7 +178,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 (int)$borrow["device_id"]
             ]);
 
-            // Cập nhật phiếu mượn
             $updateBorrow = $conn->prepare("
                 UPDATE borrow_records
                 SET
@@ -211,7 +192,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $conn->commit();
 
-            // GHI NHẬT KÝ
             logActivity(
                 $conn,
                 "Trả thiết bị",
@@ -229,7 +209,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
     } catch (PDOException $e) {
-
         if ($conn->inTransaction()) {
             $conn->rollBack();
         }
@@ -238,7 +217,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $messageType = "error";
 
     } catch (Exception $e) {
-
         if ($conn->inTransaction()) {
             $conn->rollBack();
         }
@@ -355,7 +333,7 @@ $borrowRecords = $stmt->fetchAll();
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quản lý mượn trả - EQUIP CONTROL</title>
 
-<link rel="stylesheet" href="/equip-control/assets/css/unified.css">
+<link rel="stylesheet" href="/assets/css/style.css?v=14">
 
 <style>
 * {
@@ -366,8 +344,20 @@ html, body {
     margin: 0;
     padding: 0;
     min-height: 100%;
-    background: #0b1120;
+    background: #0b1120 !important;
     color: #e5edf8;
+}
+
+body {
+    display: block !important;
+    overflow-x: hidden;
+}
+
+/* BỐ CỤC CHUNG */
+.page-container {
+    display: block !important;
+    width: 100%;
+    min-height: 100vh;
 }
 
 /* SIDEBAR */
@@ -383,7 +373,7 @@ html, body {
     margin: 0 !important;
 }
 
-/* NỘI DUNG */
+/* KHU VỰC NỘI DUNG */
 .main-content {
     position: relative !important;
     display: block !important;
@@ -393,6 +383,7 @@ html, body {
     min-width: 0 !important;
     min-height: 100vh;
     padding: 0 !important;
+    background: #0b1120 !important;
     box-sizing: border-box !important;
 }
 
@@ -710,325 +701,325 @@ html, body {
 
 <body>
 
-<?php require __DIR__ . "/includes/sidebar.php"; ?>
+<div class="page-container">
 
-<main class="main-content">
-<div class="borrow-content">
+    <?php require __DIR__ . "/includes/sidebar.php"; ?>
 
-    <h1 class="borrow-heading">QUẢN LÝ MƯỢN TRẢ THIẾT BỊ</h1>
+    <main class="main-content">
+    <div class="borrow-content">
 
-    <p class="borrow-subtitle">
-        Theo dõi phiếu mượn, người mượn và tình trạng trả thiết bị.
-    </p>
+        <h1 class="borrow-heading">QUẢN LÝ MƯỢN TRẢ THIẾT BỊ</h1>
 
-    <?php if ($message !== ""): ?>
-        <div class="borrow-alert <?= borrowEscape($messageType) ?>">
-            <?= borrowEscape($message) ?>
-        </div>
-    <?php endif; ?>
-
-    <div class="borrow-stats">
-
-        <div class="borrow-stat">
-            <span>Phiếu đang mượn</span>
-            <strong><?= number_format($totalBorrowing) ?></strong>
-        </div>
-
-        <div class="borrow-stat">
-            <span>Phiếu đã trả</span>
-            <strong><?= number_format($totalReturned) ?></strong>
-        </div>
-
-        <div class="borrow-stat">
-            <span>Tổng số phiếu</span>
-            <strong><?= number_format($totalRecords) ?></strong>
-        </div>
-
-        <div class="borrow-stat overdue">
-            <span>Phiếu quá hạn</span>
-            <strong><?= number_format($overdueCount) ?></strong>
-        </div>
-
-    </div>
-
-    <section class="borrow-panel">
-
-        <h3>TẠO PHIẾU MƯỢN THIẾT BỊ</h3>
-
-        <form method="POST">
-
-            <input type="hidden" name="action" value="borrow">
-
-            <div class="borrow-form-grid">
-
-                <div class="borrow-field">
-                    <label>Chọn thiết bị *</label>
-
-                    <select name="device_id" required>
-                        <option value="">-- Chọn thiết bị --</option>
-
-                        <?php foreach ($devices as $device): ?>
-                            <option
-                                value="<?= (int)$device["id"] ?>"
-                                <?= $device["status"] !== "Đang sử dụng" || (int)$device["quantity"] <= 0 ? "disabled" : "" ?>
-                            >
-                                <?= borrowEscape($device["device_code"]) ?>
-                                -
-                                <?= borrowEscape($device["device_name"]) ?>
-                                (Còn <?= (int)$device["quantity"] ?>
-                                <?= borrowEscape($device["unit"]) ?>)
-                            </option>
-                        <?php endforeach; ?>
-
-                    </select>
-                </div>
-
-                <div class="borrow-field">
-                    <label>Người mượn *</label>
-                    <input type="text" name="borrower_name" required
-                           placeholder="Nhập họ tên người mượn">
-                </div>
-
-                <div class="borrow-field">
-                    <label>Số điện thoại / Liên hệ</label>
-                    <input type="text" name="borrower_contact"
-                           placeholder="Nhập số điện thoại hoặc thông tin liên hệ">
-                </div>
-
-                <div class="borrow-field">
-                    <label>Số lượng mượn *</label>
-                    <input type="number" name="quantity" min="1"
-                           value="1" required>
-                </div>
-
-                <div class="borrow-field">
-                    <label>Ngày mượn *</label>
-                    <input type="date" name="borrow_date"
-                           value="<?= date("Y-m-d") ?>" required>
-                </div>
-
-                <div class="borrow-field">
-                    <label>Ngày dự kiến trả *</label>
-                    <input type="date" name="expected_return_date"
-                           value="<?= date("Y-m-d", strtotime("+7 days")) ?>" required>
-                </div>
-
-                <div class="borrow-field full">
-                    <label>Ghi chú</label>
-                    <textarea name="note"
-                              placeholder="Nhập mục đích mượn hoặc ghi chú..."></textarea>
-                </div>
-
-            </div>
-
-            <div class="borrow-actions">
-                <button type="submit" class="borrow-btn borrow-btn-primary">
-                    TẠO PHIẾU MƯỢN
-                </button>
-            </div>
-
-        </form>
-
-    </section>
-
-    <section class="borrow-panel">
-
-        <h3>DANH SÁCH PHIẾU MƯỢN TRẢ</h3>
-
-        <form method="GET" class="borrow-search">
-
-            <input type="text" name="keyword"
-                   value="<?= borrowEscape($keyword) ?>"
-                   placeholder="Tìm người mượn, số điện thoại, mã hoặc tên thiết bị...">
-
-            <select name="status">
-                <option value="">Tất cả trạng thái</option>
-
-                <option value="Đang mượn"
-                    <?= $statusFilter === "Đang mượn" ? "selected" : "" ?>>
-                    Đang mượn
-                </option>
-
-                <option value="Đã trả"
-                    <?= $statusFilter === "Đã trả" ? "selected" : "" ?>>
-                    Đã trả
-                </option>
-            </select>
-
-            <button type="submit" class="borrow-btn borrow-btn-primary">
-                TÌM KIẾM
-            </button>
-
-            <a href="/equip-control/borrow.php"
-               class="borrow-btn borrow-btn-secondary">
-                LÀM MỚI
-            </a>
-
-        </form>
-
-        <div class="borrow-table-wrap">
-
-            <table class="borrow-table">
-
-                <thead>
-                    <tr>
-                        <th>STT</th>
-                        <th>Mã phiếu</th>
-                        <th>Thiết bị</th>
-                        <th>Người mượn</th>
-                        <th>Liên hệ</th>
-                        <th>Số lượng</th>
-                        <th>Ngày mượn</th>
-                        <th>Dự kiến trả</th>
-                        <th>Ngày trả thực tế</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                <?php if ($borrowRecords): ?>
-
-                    <?php foreach ($borrowRecords as $index => $record): ?>
-
-                        <?php
-                        $isBorrowing = $record["status"] === "Đang mượn";
-
-                        $isOverdue = $isBorrowing
-                            && $record["expected_return_date"] < date("Y-m-d");
-                        ?>
-
-                        <tr>
-
-                            <td><?= $offset + $index + 1 ?></td>
-
-                            <td>#<?= (int)$record["id"] ?></td>
-
-                            <td>
-                                <?= borrowEscape($record["device_name"]) ?>
-                                <br>
-                                <small style="color:#91a6bd">
-                                    <?= borrowEscape($record["device_code"]) ?>
-                                </small>
-                            </td>
-
-                            <td><?= borrowEscape($record["borrower_name"]) ?></td>
-
-                            <td><?= borrowEscape($record["borrower_contact"]) ?></td>
-
-                            <td>
-                                <?= (int)$record["quantity"] ?>
-                                <?= borrowEscape($record["unit"]) ?>
-                            </td>
-
-                            <td>
-                                <?= date("d/m/Y", strtotime($record["borrow_date"])) ?>
-                            </td>
-
-                            <td class="<?= $isOverdue ? "borrow-overdue" : "" ?>">
-                                <?= date("d/m/Y", strtotime($record["expected_return_date"])) ?>
-
-                                <?php if ($isOverdue): ?>
-                                    <br>
-                                    <small>Quá hạn</small>
-                                <?php endif; ?>
-                            </td>
-
-                            <td>
-                                <?= $record["actual_return_date"]
-                                    ? date("d/m/Y", strtotime($record["actual_return_date"]))
-                                    : "Chưa trả" ?>
-                            </td>
-
-                            <td>
-                                <span class="borrow-status <?= $isBorrowing ? "borrowing" : "returned" ?>">
-                                    <?= borrowEscape($record["status"]) ?>
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <?php if ($isBorrowing): ?>
-
-                                    <form method="POST"
-                                        onsubmit="return confirm('Xác nhận người này đã trả thiết bị?');">
-
-                                        <input type="hidden" name="action" value="return">
-
-                                        <input type="hidden" name="borrow_id"
-                                               value="<?= (int)$record["id"] ?>">
-
-                                        <input type="hidden" name="actual_return_date"
-                                               value="<?= date("Y-m-d") ?>">
-
-                                        <button type="submit"
-                                            class="borrow-btn borrow-btn-return">
-                                            XÁC NHẬN TRẢ
-                                        </button>
-
-                                    </form>
-
-                                <?php else: ?>
-
-                                    <span style="color:#86efac;font-size:12px">
-                                        Đã hoàn tất
-                                    </span>
-
-                                <?php endif; ?>
-
-                            </td>
-
-                        </tr>
-
-                    <?php endforeach; ?>
-
-                <?php else: ?>
-
-                    <tr>
-                        <td colspan="11" class="borrow-empty">
-                            Chưa có phiếu mượn phù hợp.
-                        </td>
-                    </tr>
-
-                <?php endif; ?>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <?php if ($totalPages > 1): ?>
-
-            <div class="borrow-pagination">
-
-                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-
-                    <?php
-                    $query = $_GET;
-                    $query["page"] = $i;
-                    ?>
-
-                    <a href="?<?= borrowEscape(http_build_query($query)) ?>"
-                       class="<?= $page === $i ? "current" : "" ?>">
-                        <?= $i ?>
-                    </a>
-
-                <?php endfor; ?>
-
-            </div>
-
-        <?php endif; ?>
-
-        <p class="borrow-note">
-            Hiển thị <?= count($borrowRecords) ?> / <?= $filteredTotal ?> phiếu mượn.
+        <p class="borrow-subtitle">
+            Theo dõi phiếu mượn, người mượn và tình trạng trả thiết bị.
         </p>
 
-    </section>
+        <?php if ($message !== ""): ?>
+            <div class="borrow-alert <?= borrowEscape($messageType) ?>">
+                <?= borrowEscape($message) ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="borrow-stats">
+
+            <div class="borrow-stat">
+                <span>Phiếu đang mượn</span>
+                <strong><?= number_format($totalBorrowing) ?></strong>
+            </div>
+
+            <div class="borrow-stat">
+                <span>Phiếu đã trả</span>
+                <strong><?= number_format($totalReturned) ?></strong>
+            </div>
+
+            <div class="borrow-stat">
+                <span>Tổng số phiếu</span>
+                <strong><?= number_format($totalRecords) ?></strong>
+            </div>
+
+            <div class="borrow-stat overdue">
+                <span>Phiếu quá hạn</span>
+                <strong><?= number_format($overdueCount) ?></strong>
+            </div>
+
+        </div>
+
+        <section class="borrow-panel">
+
+            <h3>TẠO PHIẾU MƯỢN THIẾT BỊ</h3>
+
+            <form method="POST">
+                <input type="hidden" name="action" value="borrow">
+
+                <div class="borrow-form-grid">
+
+                    <div class="borrow-field">
+                        <label>Chọn thiết bị *</label>
+
+                        <select name="device_id" required>
+                            <option value="">-- Chọn thiết bị --</option>
+
+                            <?php foreach ($devices as $device): ?>
+                                <option
+                                    value="<?= (int)$device["id"] ?>"
+                                    <?= $device["status"] !== "Đang sử dụng" || (int)$device["quantity"] <= 0 ? "disabled" : "" ?>
+                                >
+                                    <?= borrowEscape($device["device_code"]) ?>
+                                    -
+                                    <?= borrowEscape($device["device_name"]) ?>
+                                    (Còn <?= (int)$device["quantity"] ?>
+                                    <?= borrowEscape($device["unit"]) ?>)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="borrow-field">
+                        <label>Người mượn *</label>
+                        <input type="text" name="borrower_name" required
+                               placeholder="Nhập họ tên người mượn">
+                    </div>
+
+                    <div class="borrow-field">
+                        <label>Số điện thoại / Liên hệ</label>
+                        <input type="text" name="borrower_contact"
+                               placeholder="Nhập số điện thoại hoặc thông tin liên hệ">
+                    </div>
+
+                    <div class="borrow-field">
+                        <label>Số lượng mượn *</label>
+                        <input type="number" name="quantity" min="1"
+                               value="1" required>
+                    </div>
+
+                    <div class="borrow-field">
+                        <label>Ngày mượn *</label>
+                        <input type="date" name="borrow_date"
+                               value="<?= date("Y-m-d") ?>" required>
+                    </div>
+
+                    <div class="borrow-field">
+                        <label>Ngày dự kiến trả *</label>
+                        <input type="date" name="expected_return_date"
+                               value="<?= date("Y-m-d", strtotime("+7 days")) ?>" required>
+                    </div>
+
+                    <div class="borrow-field full">
+                        <label>Ghi chú</label>
+                        <textarea name="note"
+                                  placeholder="Nhập mục đích mượn hoặc ghi chú..."></textarea>
+                    </div>
+
+                </div>
+
+                <div class="borrow-actions">
+                    <button type="submit" class="borrow-btn borrow-btn-primary">
+                        TẠO PHIẾU MƯỢN
+                    </button>
+                </div>
+            </form>
+
+        </section>
+
+        <section class="borrow-panel">
+
+            <h3>DANH SÁCH PHIẾU MƯỢN TRẢ</h3>
+
+            <form method="GET" class="borrow-search">
+
+                <input type="text" name="keyword"
+                       value="<?= borrowEscape($keyword) ?>"
+                       placeholder="Tìm người mượn, số điện thoại, mã hoặc tên thiết bị...">
+
+                <select name="status">
+                    <option value="">Tất cả trạng thái</option>
+
+                    <option value="Đang mượn"
+                        <?= $statusFilter === "Đang mượn" ? "selected" : "" ?>>
+                        Đang mượn
+                    </option>
+
+                    <option value="Đã trả"
+                        <?= $statusFilter === "Đã trả" ? "selected" : "" ?>>
+                        Đã trả
+                    </option>
+                </select>
+
+                <button type="submit" class="borrow-btn borrow-btn-primary">
+                    TÌM KIẾM
+                </button>
+
+                <a href="/borrow.php" class="borrow-btn borrow-btn-secondary">
+                    LÀM MỚI
+                </a>
+
+            </form>
+
+            <div class="borrow-table-wrap">
+
+                <table class="borrow-table">
+
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Mã phiếu</th>
+                            <th>Thiết bị</th>
+                            <th>Người mượn</th>
+                            <th>Liên hệ</th>
+                            <th>Số lượng</th>
+                            <th>Ngày mượn</th>
+                            <th>Dự kiến trả</th>
+                            <th>Ngày trả thực tế</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    <?php if ($borrowRecords): ?>
+
+                        <?php foreach ($borrowRecords as $index => $record): ?>
+
+                            <?php
+                            $isBorrowing = $record["status"] === "Đang mượn";
+
+                            $isOverdue = $isBorrowing
+                                && $record["expected_return_date"] < date("Y-m-d");
+                            ?>
+
+                            <tr>
+
+                                <td><?= $offset + $index + 1 ?></td>
+
+                                <td>#<?= (int)$record["id"] ?></td>
+
+                                <td>
+                                    <?= borrowEscape($record["device_name"]) ?>
+                                    <br>
+                                    <small style="color:#91a6bd">
+                                        <?= borrowEscape($record["device_code"]) ?>
+                                    </small>
+                                </td>
+
+                                <td><?= borrowEscape($record["borrower_name"]) ?></td>
+
+                                <td><?= borrowEscape($record["borrower_contact"]) ?></td>
+
+                                <td>
+                                    <?= (int)$record["quantity"] ?>
+                                    <?= borrowEscape($record["unit"]) ?>
+                                </td>
+
+                                <td>
+                                    <?= date("d/m/Y", strtotime($record["borrow_date"])) ?>
+                                </td>
+
+                                <td class="<?= $isOverdue ? "borrow-overdue" : "" ?>">
+                                    <?= date("d/m/Y", strtotime($record["expected_return_date"])) ?>
+
+                                    <?php if ($isOverdue): ?>
+                                        <br>
+                                        <small>Quá hạn</small>
+                                    <?php endif; ?>
+                                </td>
+
+                                <td>
+                                    <?= $record["actual_return_date"]
+                                        ? date("d/m/Y", strtotime($record["actual_return_date"]))
+                                        : "Chưa trả" ?>
+                                </td>
+
+                                <td>
+                                    <span class="borrow-status <?= $isBorrowing ? "borrowing" : "returned" ?>">
+                                        <?= borrowEscape($record["status"]) ?>
+                                    </span>
+                                </td>
+
+                                <td>
+
+                                    <?php if ($isBorrowing): ?>
+
+                                        <form method="POST"
+                                            onsubmit="return confirm('Xác nhận người này đã trả thiết bị?');">
+
+                                            <input type="hidden" name="action" value="return">
+
+                                            <input type="hidden" name="borrow_id"
+                                                   value="<?= (int)$record["id"] ?>">
+
+                                            <input type="hidden" name="actual_return_date"
+                                                   value="<?= date("Y-m-d") ?>">
+
+                                            <button type="submit"
+                                                class="borrow-btn borrow-btn-return">
+                                                XÁC NHẬN TRẢ
+                                            </button>
+
+                                        </form>
+
+                                    <?php else: ?>
+
+                                        <span style="color:#86efac;font-size:12px">
+                                            Đã hoàn tất
+                                        </span>
+
+                                    <?php endif; ?>
+
+                                </td>
+
+                            </tr>
+
+                        <?php endforeach; ?>
+
+                    <?php else: ?>
+
+                        <tr>
+                            <td colspan="11" class="borrow-empty">
+                                Chưa có phiếu mượn phù hợp.
+                            </td>
+                        </tr>
+
+                    <?php endif; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <?php if ($totalPages > 1): ?>
+
+                <div class="borrow-pagination">
+
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+
+                        <?php
+                        $query = $_GET;
+                        $query["page"] = $i;
+                        ?>
+
+                        <a href="?<?= borrowEscape(http_build_query($query)) ?>"
+                           class="<?= $page === $i ? "current" : "" ?>">
+                            <?= $i ?>
+                        </a>
+
+                    <?php endfor; ?>
+
+                </div>
+
+            <?php endif; ?>
+
+            <p class="borrow-note">
+                Hiển thị <?= count($borrowRecords) ?> / <?= $filteredTotal ?> phiếu mượn.
+            </p>
+
+        </section>
+
+    </div>
+    </main>
 
 </div>
-</main>
 
 </body>
 </html>
