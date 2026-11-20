@@ -12,7 +12,6 @@ function usersEscape($value) {
 
 $message = "";
 $messageType = "success";
-
 $currentUserId = (int)($_SESSION["user_id"] ?? 0);
 
 // XỬ LÝ THAO TÁC
@@ -22,9 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     try {
 
-        // =====================================
-        // 1. THÊM TÀI KHOẢN
-        // =====================================
+        // THÊM TÀI KHOẢN
         if ($action === "add") {
 
             $fullName = trim($_POST["full_name"] ?? "");
@@ -44,9 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 throw new Exception("Vai trò không hợp lệ.");
             }
 
-            $check = $conn->prepare("
-                SELECT COUNT(*) FROM users WHERE username = ?
-            ");
+            $check = $conn->prepare("SELECT COUNT(*) FROM users WHERE username = ?");
             $check->execute([$username]);
 
             if ((int)$check->fetchColumn() > 0) {
@@ -56,8 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
             $stmt = $conn->prepare("
-                INSERT INTO users
-                (full_name, username, password, role, status)
+                INSERT INTO users (full_name, username, password, role, status)
                 VALUES (?, ?, ?, ?, 1)
             ");
 
@@ -68,8 +62,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $role
             ]);
 
-            $newId = (int)$conn->lastInsertId();
-
             logActivity(
                 $conn,
                 "Tạo tài khoản",
@@ -78,9 +70,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $message = "Tạo tài khoản thành công!";
 
-        // =====================================
-        // 2. CHỈNH SỬA TÀI KHOẢN
-        // =====================================
+        // SỬA TÀI KHOẢN
         } elseif ($action === "edit") {
 
             $userId = (int)($_POST["user_id"] ?? 0);
@@ -102,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 WHERE id = ?
             ");
             $stmt->execute([$userId]);
-            $oldUser = $stmt->fetch();
+            $oldUser = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$oldUser) {
                 throw new Exception("Không tìm thấy tài khoản.");
@@ -111,8 +101,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $check = $conn->prepare("
                 SELECT COUNT(*)
                 FROM users
-                WHERE username = ?
-                AND id != ?
+                WHERE username = ? AND id != ?
             ");
             $check->execute([$username, $userId]);
 
@@ -120,7 +109,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 throw new Exception("Tên đăng nhập đã được sử dụng.");
             }
 
-            // Không cho tự hạ quyền quản trị của chính mình
             if ($userId === $currentUserId && $role !== "admin") {
                 throw new Exception("Không thể tự thay đổi vai trò quản trị của tài khoản đang đăng nhập.");
             }
@@ -130,6 +118,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 SET full_name = ?, username = ?, role = ?
                 WHERE id = ?
             ");
+
             $update->execute([
                 $fullName,
                 $username,
@@ -137,7 +126,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $userId
             ]);
 
-            // Cập nhật thông tin phiên đăng nhập nếu sửa tài khoản hiện tại
             if ($userId === $currentUserId) {
                 $_SESSION["full_name"] = $fullName;
                 $_SESSION["username"] = $username;
@@ -153,9 +141,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $message = "Cập nhật tài khoản thành công!";
 
-        // =====================================
-        // 3. KHÓA / MỞ KHÓA
-        // =====================================
+        // KHÓA / MỞ KHÓA
         } elseif ($action === "toggle") {
 
             $userId = (int)($_POST["user_id"] ?? 0);
@@ -174,7 +160,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 WHERE id = ?
             ");
             $stmt->execute([$userId]);
-            $user = $stmt->fetch();
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$user) {
                 throw new Exception("Không tìm thấy tài khoản.");
@@ -182,14 +168,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $newStatus = ((int)$user["status"] === 1) ? 0 : 1;
 
-            // Không cho khóa quản trị viên cuối cùng đang hoạt động
             if ($newStatus === 0 && $user["role"] === "admin") {
 
                 $adminCount = (int)$conn->query("
                     SELECT COUNT(*)
                     FROM users
-                    WHERE role = 'admin'
-                    AND status = 1
+                    WHERE role = 'admin' AND status = 1
                 ")->fetchColumn();
 
                 if ($adminCount <= 1) {
@@ -198,16 +182,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
 
             $update = $conn->prepare("
-                UPDATE users
-                SET status = ?
-                WHERE id = ?
+                UPDATE users SET status = ? WHERE id = ?
             ");
-            $update->execute([
-                $newStatus,
-                $userId
-            ]);
+            $update->execute([$newStatus, $userId]);
 
-            $actionName = $newStatus === 1 ? "Mở khóa tài khoản" : "Khóa tài khoản";
+            $actionName = $newStatus === 1
+                ? "Mở khóa tài khoản"
+                : "Khóa tài khoản";
 
             logActivity(
                 $conn,
@@ -219,9 +200,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 ? "Mở khóa tài khoản thành công!"
                 : "Khóa tài khoản thành công!";
 
-        // =====================================
-        // 4. ĐẶT LẠI MẬT KHẨU
-        // =====================================
+        // ĐẶT LẠI MẬT KHẨU
         } elseif ($action === "reset_password") {
 
             $userId = (int)($_POST["user_id"] ?? 0);
@@ -241,7 +220,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 WHERE id = ?
             ");
             $stmt->execute([$userId]);
-            $user = $stmt->fetch();
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$user) {
                 throw new Exception("Không tìm thấy tài khoản.");
@@ -250,14 +229,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
 
             $update = $conn->prepare("
-                UPDATE users
-                SET password = ?
-                WHERE id = ?
+                UPDATE users SET password = ? WHERE id = ?
             ");
-            $update->execute([
-                $hashedPassword,
-                $userId
-            ]);
+            $update->execute([$hashedPassword, $userId]);
 
             logActivity(
                 $conn,
@@ -267,9 +241,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $message = "Đặt lại mật khẩu thành công!";
 
-        // =====================================
-        // 5. XÓA TÀI KHOẢN
-        // =====================================
+        // XÓA TÀI KHOẢN
         } elseif ($action === "delete") {
 
             $userId = (int)($_POST["user_id"] ?? 0);
@@ -288,7 +260,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 WHERE id = ?
             ");
             $stmt->execute([$userId]);
-            $user = $stmt->fetch();
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$user) {
                 throw new Exception("Không tìm thấy tài khoản.");
@@ -299,8 +271,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $adminCount = (int)$conn->query("
                     SELECT COUNT(*)
                     FROM users
-                    WHERE role = 'admin'
-                    AND status = 1
+                    WHERE role = 'admin' AND status = 1
                 ")->fetchColumn();
 
                 if ($adminCount <= 1) {
@@ -308,10 +279,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 }
             }
 
-            $delete = $conn->prepare("
-                DELETE FROM users
-                WHERE id = ?
-            ");
+            $delete = $conn->prepare("DELETE FROM users WHERE id = ?");
             $delete->execute([$userId]);
 
             logActivity(
@@ -327,21 +295,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
     } catch (PDOException $e) {
-
         $message = "Có lỗi cơ sở dữ liệu. Vui lòng kiểm tra lại.";
         $messageType = "error";
 
     } catch (Exception $e) {
-
         $message = $e->getMessage();
         $messageType = "error";
     }
 }
 
 // THỐNG KÊ
-$totalUsers = (int)$conn->query("
-    SELECT COUNT(*) FROM users
-")->fetchColumn();
+$totalUsers = (int)$conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
 
 $activeUsers = (int)$conn->query("
     SELECT COUNT(*) FROM users WHERE status = 1
@@ -365,7 +329,7 @@ $params = [];
 
 if ($keyword !== "") {
     $where[] = "(full_name LIKE ? OR username LIKE ?)";
-    $search = "%{$keyword}%";
+    $search = "%" . $keyword . "%";
     array_push($params, $search, $search);
 }
 
@@ -405,7 +369,7 @@ $stmt = $conn->prepare("
     LIMIT $perPage OFFSET $offset
 ");
 $stmt->execute($params);
-$users = $stmt->fetchAll();
+$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -413,9 +377,10 @@ $users = $stmt->fetchAll();
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Quản lý tài khoản - EQUIP CONTROL</title>
 
-<link rel="stylesheet" href="/equip-control/assets/css/unified.css">
+<link rel="stylesheet" href="/assets/css/style.css?v=15">
 
 <style>
 * {
@@ -423,11 +388,16 @@ $users = $stmt->fetchAll();
 }
 
 html, body {
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
     min-height: 100%;
-    background: #0b1120;
+    background: #0b1120 !important;
     color: #e5edf8;
+}
+
+body {
+    display: block !important;
+    overflow-x: hidden;
 }
 
 .sidebar {
@@ -451,6 +421,7 @@ html, body {
     min-width: 0 !important;
     min-height: 100vh;
     padding: 0 !important;
+    background: #0b1120 !important;
 }
 
 .users-content {
@@ -565,6 +536,7 @@ html, body {
     justify-content: center;
     font-size: 11px;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .users-primary {
@@ -648,6 +620,7 @@ html, body {
     border-bottom: 1px solid #263b52;
     font-size: 12px;
     color: #d4e1ef;
+    vertical-align: middle;
 }
 
 .users-table tbody tr:hover {
@@ -784,7 +757,6 @@ html, body {
     <?php endif; ?>
 
     <div class="users-stats">
-
         <div class="users-stat">
             <span>Tổng tài khoản</span>
             <strong><?= number_format($totalUsers) ?></strong>
@@ -804,19 +776,15 @@ html, body {
             <span>Quản trị viên</span>
             <strong><?= number_format($adminUsers) ?></strong>
         </div>
-
     </div>
 
     <section class="users-panel">
-
         <h3>TẠO TÀI KHOẢN MỚI</h3>
 
         <form method="POST">
-
             <input type="hidden" name="action" value="add">
 
             <div class="users-form-grid">
-
                 <div class="users-field">
                     <label>Họ và tên *</label>
                     <input type="text" name="full_name" required
@@ -842,7 +810,6 @@ html, body {
                         <option value="admin">Quản trị viên</option>
                     </select>
                 </div>
-
             </div>
 
             <div class="users-actions">
@@ -850,17 +817,13 @@ html, body {
                     TẠO TÀI KHOẢN
                 </button>
             </div>
-
         </form>
-
     </section>
 
     <section class="users-panel">
-
         <h3>DANH SÁCH TÀI KHOẢN</h3>
 
         <form method="GET" class="users-search">
-
             <input type="text" name="keyword"
                    value="<?= usersEscape($keyword) ?>"
                    placeholder="Tìm theo họ tên hoặc tên đăng nhập...">
@@ -889,17 +852,13 @@ html, body {
                 TÌM KIẾM
             </button>
 
-            <a href="/equip-control/users.php"
-               class="users-btn users-secondary">
+            <a href="/users.php" class="users-btn users-secondary">
                 LÀM MỚI
             </a>
-
         </form>
 
         <div class="users-table-wrap">
-
             <table class="users-table">
-
                 <thead>
                     <tr>
                         <th>STT</th>
@@ -912,13 +871,10 @@ html, body {
                 </thead>
 
                 <tbody>
-
                 <?php if ($users): ?>
 
                     <?php foreach ($users as $index => $user): ?>
-
                         <tr>
-
                             <td><?= $offset + $index + 1 ?></td>
 
                             <td><?= usersEscape($user["full_name"]) ?></td>
@@ -938,25 +894,22 @@ html, body {
                             </td>
 
                             <td>
-
                                 <div class="users-actions" style="margin:0">
 
                                     <button type="button"
                                         class="users-btn users-edit"
-                                        onclick="editUser(
-                                            <?= (int)$user['id'] ?>,
-                                            '<?= usersEscape($user['full_name']) ?>',
-                                            '<?= usersEscape($user['username']) ?>',
-                                            '<?= usersEscape($user['role']) ?>'
-                                        )">
+                                        data-id="<?= (int)$user['id'] ?>"
+                                        data-name="<?= usersEscape($user['full_name']) ?>"
+                                        data-username="<?= usersEscape($user['username']) ?>"
+                                        data-role="<?= usersEscape($user['role']) ?>"
+                                        onclick="editUser(this)">
                                         SỬA
                                     </button>
 
                                     <?php if ((int)$user["id"] !== $currentUserId): ?>
 
                                         <form method="POST"
-                                            onsubmit="return confirm('Xác nhận thay đổi trạng thái tài khoản này?');">
-
+                                              onsubmit="return confirm('Xác nhận thay đổi trạng thái tài khoản này?');">
                                             <input type="hidden" name="action" value="toggle">
                                             <input type="hidden" name="user_id" value="<?= (int)$user["id"] ?>">
 
@@ -964,63 +917,51 @@ html, body {
                                                 class="users-btn <?= (int)$user["status"] === 1 ? "users-lock" : "users-unlock" ?>">
                                                 <?= (int)$user["status"] === 1 ? "KHÓA" : "MỞ KHÓA" ?>
                                             </button>
-
                                         </form>
 
                                     <?php endif; ?>
 
                                     <button type="button"
                                         class="users-btn users-password"
-                                        onclick="resetPassword(<?= (int)$user['id'] ?>, '<?= usersEscape($user['username']) ?>')">
+                                        data-id="<?= (int)$user['id'] ?>"
+                                        data-username="<?= usersEscape($user['username']) ?>"
+                                        onclick="resetPassword(this)">
                                         ĐẶT LẠI MK
                                     </button>
 
                                     <?php if ((int)$user["id"] !== $currentUserId): ?>
 
                                         <form method="POST"
-                                            onsubmit="return confirm('Bạn chắc chắn muốn xóa tài khoản này? Thao tác không thể hoàn tác.');">
-
+                                              onsubmit="return confirm('Bạn chắc chắn muốn xóa tài khoản này? Thao tác không thể hoàn tác.');">
                                             <input type="hidden" name="action" value="delete">
                                             <input type="hidden" name="user_id" value="<?= (int)$user["id"] ?>">
 
                                             <button type="submit" class="users-btn users-delete">
                                                 XÓA
                                             </button>
-
                                         </form>
 
                                     <?php endif; ?>
 
                                 </div>
-
                             </td>
-
                         </tr>
-
                     <?php endforeach; ?>
 
                 <?php else: ?>
-
                     <tr>
                         <td colspan="6" class="users-empty">
                             Không tìm thấy tài khoản phù hợp.
                         </td>
                     </tr>
-
                 <?php endif; ?>
-
                 </tbody>
-
             </table>
-
         </div>
 
         <?php if ($totalPages > 1): ?>
-
             <div class="users-pagination">
-
                 <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-
                     <?php
                     $query = $_GET;
                     $query["page"] = $i;
@@ -1030,45 +971,38 @@ html, body {
                        class="<?= $page === $i ? "current" : "" ?>">
                         <?= $i ?>
                     </a>
-
                 <?php endfor; ?>
-
             </div>
-
         <?php endif; ?>
 
         <p class="users-note">
             Hiển thị <?= count($users) ?> / <?= $filteredTotal ?> tài khoản.
         </p>
-
     </section>
 
 </div>
 </main>
 
-<!-- FORM SỬA TÀI KHOẢN -->
-<div id="editModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:2000; align-items:center; justify-content:center; padding:15px;">
-
-    <div style="background:#111f31; border:1px solid #304963; border-radius:12px; padding:24px; width:100%; max-width:450px;">
-
-        <h3 style="color:#22d3ee; margin-top:0;">CHỈNH SỬA TÀI KHOẢN</h3>
+<!-- MODAL SỬA TÀI KHOẢN -->
+<div id="editModal" class="users-modal">
+    <div class="users-modal-box">
+        <h3>CHỈNH SỬA TÀI KHOẢN</h3>
 
         <form method="POST">
-
             <input type="hidden" name="action" value="edit">
             <input type="hidden" name="user_id" id="editUserId">
 
-            <div class="users-field" style="margin-bottom:14px;">
+            <div class="users-field">
                 <label>Họ và tên</label>
                 <input type="text" name="full_name" id="editFullName" required>
             </div>
 
-            <div class="users-field" style="margin-bottom:14px;">
+            <div class="users-field">
                 <label>Tên đăng nhập</label>
                 <input type="text" name="username" id="editUsername" required>
             </div>
 
-            <div class="users-field" style="margin-bottom:14px;">
+            <div class="users-field">
                 <label>Vai trò</label>
                 <select name="role" id="editRole">
                     <option value="staff">Nhân viên</option>
@@ -1080,56 +1014,80 @@ html, body {
                 <button type="submit" class="users-btn users-primary">LƯU THAY ĐỔI</button>
                 <button type="button" class="users-btn users-secondary" onclick="closeModal('editModal')">ĐÓNG</button>
             </div>
-
         </form>
-
     </div>
 </div>
 
-<!-- FORM ĐẶT LẠI MẬT KHẨU -->
-<div id="passwordModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:2000; align-items:center; justify-content:center; padding:15px;">
-
-    <div style="background:#111f31; border:1px solid #304963; border-radius:12px; padding:24px; width:100%; max-width:420px;">
-
-        <h3 style="color:#22d3ee; margin-top:0;">ĐẶT LẠI MẬT KHẨU</h3>
+<!-- MODAL ĐẶT LẠI MẬT KHẨU -->
+<div id="passwordModal" class="users-modal">
+    <div class="users-modal-box">
+        <h3>ĐẶT LẠI MẬT KHẨU</h3>
 
         <p id="passwordUsername" style="color:#91a6bd;font-size:13px;"></p>
 
         <form method="POST">
-
             <input type="hidden" name="action" value="reset_password">
             <input type="hidden" name="user_id" id="passwordUserId">
 
             <div class="users-field">
                 <label>Mật khẩu mới</label>
-                <input type="password" name="new_password" required minlength="6"
-                       placeholder="Nhập mật khẩu mới">
+                <input type="password" name="new_password" required
+                       minlength="6" placeholder="Nhập mật khẩu mới">
             </div>
 
             <div class="users-actions">
                 <button type="submit" class="users-btn users-primary">XÁC NHẬN</button>
                 <button type="button" class="users-btn users-secondary" onclick="closeModal('passwordModal')">ĐÓNG</button>
             </div>
-
         </form>
-
     </div>
 </div>
 
+<style>
+.users-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+}
+
+.users-modal-box {
+    background: #111f31;
+    border: 1px solid #304963;
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    max-width: 450px;
+}
+
+.users-modal-box h3 {
+    color: #22d3ee;
+    margin-top: 0;
+}
+
+.users-modal-box .users-field {
+    margin-bottom: 14px;
+}
+</style>
+
 <script>
-function editUser(id, fullName, username, role) {
-    document.getElementById("editUserId").value = id;
-    document.getElementById("editFullName").value = fullName;
-    document.getElementById("editUsername").value = username;
-    document.getElementById("editRole").value = role;
+function editUser(button) {
+    document.getElementById("editUserId").value = button.dataset.id;
+    document.getElementById("editFullName").value = button.dataset.name;
+    document.getElementById("editUsername").value = button.dataset.username;
+    document.getElementById("editRole").value = button.dataset.role;
 
     document.getElementById("editModal").style.display = "flex";
 }
 
-function resetPassword(id, username) {
-    document.getElementById("passwordUserId").value = id;
+function resetPassword(button) {
+    document.getElementById("passwordUserId").value = button.dataset.id;
     document.getElementById("passwordUsername").textContent =
-        "Tài khoản: " + username;
+        "Tài khoản: " + button.dataset.username;
 
     document.getElementById("passwordModal").style.display = "flex";
 }
