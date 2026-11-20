@@ -17,12 +17,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $action = $_POST["action"] ?? "";
 
     try {
-
-        // =====================================
         // THÊM PHIẾU BẢO TRÌ
-        // =====================================
         if ($action === "add") {
-
             $deviceId = (int)($_POST["device_id"] ?? 0);
             $problem = trim($_POST["problem_description"] ?? "");
             $maintenanceDate = $_POST["maintenance_date"] ?? "";
@@ -109,11 +105,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $message = "Tạo phiếu bảo trì thành công!";
 
-        // =====================================
         // CẬP NHẬT PHIẾU BẢO TRÌ
-        // =====================================
         } elseif ($action === "update") {
-
             $maintenanceId = (int)($_POST["maintenance_id"] ?? 0);
             $problem = trim($_POST["problem_description"] ?? "");
             $expectedEndDate = $_POST["expected_end_date"] ?? "";
@@ -183,11 +176,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $message = "Cập nhật phiếu bảo trì thành công!";
 
-        // =====================================
         // HOÀN THÀNH BẢO TRÌ
-        // =====================================
         } elseif ($action === "complete") {
-
             $maintenanceId = (int)($_POST["maintenance_id"] ?? 0);
             $actualEndDate = $_POST["actual_end_date"] ?? date("Y-m-d");
 
@@ -243,8 +233,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $maintenanceId
             ]);
 
-            // Chỉ đưa thiết bị về trạng thái đang sử dụng
-            // nếu không còn phiếu bảo trì nào đang thực hiện.
             $otherMaintenance = $conn->prepare("
                 SELECT COUNT(*)
                 FROM maintenance_records
@@ -286,7 +274,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
     } catch (PDOException $e) {
-
         if ($conn->inTransaction()) {
             $conn->rollBack();
         }
@@ -295,7 +282,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $messageType = "error";
 
     } catch (Exception $e) {
-
         if ($conn->inTransaction()) {
             $conn->rollBack();
         }
@@ -305,9 +291,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-// =====================================
-// LẤY DANH SÁCH THIẾT BỊ
-// =====================================
+// DANH SÁCH THIẾT BỊ
 $deviceStmt = $conn->query("
     SELECT id, device_code, device_name, status
     FROM devices
@@ -315,9 +299,7 @@ $deviceStmt = $conn->query("
 ");
 $devices = $deviceStmt->fetchAll();
 
-// =====================================
 // THỐNG KÊ
-// =====================================
 $totalRecords = (int)$conn->query("
     SELECT COUNT(*) FROM maintenance_records
 ")->fetchColumn();
@@ -339,9 +321,7 @@ $totalCost = (float)$conn->query("
     FROM maintenance_records
 ")->fetchColumn();
 
-// =====================================
 // TÌM KIẾM VÀ LỌC
-// =====================================
 $keyword = trim($_GET["keyword"] ?? "");
 $statusFilter = $_GET["status"] ?? "";
 
@@ -367,9 +347,7 @@ if (in_array($statusFilter, ["Đang bảo trì", "Đã hoàn thành"], true)) {
 
 $whereSQL = $where ? "WHERE " . implode(" AND ", $where) : "";
 
-// =====================================
 // PHÂN TRANG
-// =====================================
 $perPage = 10;
 $page = max(1, (int)($_GET["page"] ?? 1));
 
@@ -387,9 +365,7 @@ $totalPages = max(1, (int)ceil($filteredTotal / $perPage));
 $page = min($page, $totalPages);
 $offset = ($page - 1) * $perPage;
 
-// =====================================
 // DANH SÁCH PHIẾU BẢO TRÌ
-// =====================================
 $stmt = $conn->prepare("
     SELECT
         m.*,
@@ -404,9 +380,7 @@ $stmt = $conn->prepare("
 $stmt->execute($params);
 $records = $stmt->fetchAll();
 
-// =====================================
 // PHIẾU ĐANG CHỌN ĐỂ SỬA
-// =====================================
 $editRecord = null;
 $editId = (int)($_GET["edit"] ?? 0);
 
@@ -429,7 +403,7 @@ if ($editId > 0) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quản lý bảo trì - EQUIP CONTROL</title>
 
-<link rel="stylesheet" href="/equip-control/assets/css/unified.css">
+<link rel="stylesheet" href="/assets/css/style.css?v=14">
 
 <style>
 * {
@@ -440,10 +414,23 @@ html, body {
     margin: 0;
     padding: 0;
     min-height: 100%;
-    background: #0b1120;
+    background: #0b1120 !important;
     color: #e5edf8;
 }
 
+body {
+    display: block !important;
+    overflow-x: hidden;
+}
+
+.page-container {
+    display: block;
+    width: 100%;
+    min-height: 100vh;
+    background: #0b1120;
+}
+
+/* SIDEBAR */
 .sidebar {
     position: fixed !important;
     top: 0 !important;
@@ -456,6 +443,7 @@ html, body {
     margin: 0 !important;
 }
 
+/* NỘI DUNG CHÍNH */
 .main-content {
     position: relative !important;
     display: block !important;
@@ -465,6 +453,7 @@ html, body {
     min-width: 0 !important;
     min-height: 100vh;
     padding: 0 !important;
+    background: #0b1120 !important;
 }
 
 .maintenance-content {
@@ -472,6 +461,7 @@ html, body {
     max-width: 100%;
     min-width: 0;
     padding: 25px;
+    margin: 0;
 }
 
 .maintenance-heading {
@@ -776,412 +766,416 @@ html, body {
 
 <body>
 
-<?php require __DIR__ . "/includes/sidebar.php"; ?>
+<div class="page-container">
 
-<main class="main-content">
-<div class="maintenance-content">
+    <?php require __DIR__ . "/includes/sidebar.php"; ?>
 
-    <h1 class="maintenance-heading">QUẢN LÝ BẢO TRÌ THIẾT BỊ</h1>
+    <main class="main-content">
+    <div class="maintenance-content">
 
-    <p class="maintenance-subtitle">
-        Theo dõi quá trình sửa chữa, chi phí và tình trạng bảo trì thiết bị.
-    </p>
+        <h1 class="maintenance-heading">QUẢN LÝ BẢO TRÌ THIẾT BỊ</h1>
 
-    <?php if ($message !== ""): ?>
-        <div class="maintenance-alert <?= maintenanceEscape($messageType) ?>">
-            <?= maintenanceEscape($message) ?>
-        </div>
-    <?php endif; ?>
+        <p class="maintenance-subtitle">
+            Theo dõi quá trình sửa chữa, chi phí và tình trạng bảo trì thiết bị.
+        </p>
 
-    <div class="maintenance-stats">
-
-        <div class="maintenance-stat">
-            <span>Tổng phiếu bảo trì</span>
-            <strong><?= number_format($totalRecords) ?></strong>
-        </div>
-
-        <div class="maintenance-stat">
-            <span>Đang bảo trì</span>
-            <strong><?= number_format($totalOngoing) ?></strong>
-        </div>
-
-        <div class="maintenance-stat">
-            <span>Đã hoàn thành</span>
-            <strong><?= number_format($totalCompleted) ?></strong>
-        </div>
-
-        <div class="maintenance-stat">
-            <span>Tổng chi phí bảo trì</span>
-            <strong style="font-size:19px">
-                <?= number_format($totalCost, 0, ",", ".") ?> đ
-            </strong>
-        </div>
-
-    </div>
-
-    <?php if ($editRecord): ?>
-
-        <section class="maintenance-panel">
-
-            <h3>CẬP NHẬT PHIẾU BẢO TRÌ #<?= (int)$editRecord["id"] ?></h3>
-
-            <form method="POST">
-
-                <input type="hidden" name="action" value="update">
-                <input type="hidden" name="maintenance_id"
-                       value="<?= (int)$editRecord["id"] ?>">
-
-                <div class="maintenance-form-grid">
-
-                    <div class="maintenance-field full">
-                        <label>Nội dung bảo trì *</label>
-                        <textarea name="problem_description" required><?= maintenanceEscape($editRecord["problem_description"]) ?></textarea>
-                    </div>
-
-                    <div class="maintenance-field">
-                        <label>Ngày dự kiến hoàn thành</label>
-                        <input type="date" name="expected_end_date"
-                               value="<?= maintenanceEscape($editRecord["expected_end_date"]) ?>">
-                    </div>
-
-                    <div class="maintenance-field">
-                        <label>Chi phí bảo trì (VNĐ)</label>
-                        <input type="number" name="maintenance_cost"
-                               min="0" step="1000"
-                               value="<?= maintenanceEscape($editRecord["maintenance_cost"]) ?>">
-                    </div>
-
-                    <div class="maintenance-field">
-                        <label>Kỹ thuật viên</label>
-                        <input type="text" name="technician"
-                               value="<?= maintenanceEscape($editRecord["technician"]) ?>">
-                    </div>
-
-                    <div class="maintenance-field">
-                        <label>Ghi chú</label>
-                        <input type="text" name="note"
-                               value="<?= maintenanceEscape($editRecord["note"]) ?>">
-                    </div>
-
-                </div>
-
-                <div class="maintenance-actions">
-
-                    <button type="submit"
-                            class="maintenance-btn maintenance-primary">
-                        LƯU THAY ĐỔI
-                    </button>
-
-                    <a href="/equip-control/maintenance.php"
-                       class="maintenance-btn maintenance-secondary">
-                        HỦY
-                    </a>
-
-                </div>
-
-            </form>
-
-        </section>
-
-    <?php else: ?>
-
-        <section class="maintenance-panel">
-
-            <h3>TẠO PHIẾU BẢO TRÌ MỚI</h3>
-
-            <form method="POST">
-
-                <input type="hidden" name="action" value="add">
-
-                <div class="maintenance-form-grid">
-
-                    <div class="maintenance-field">
-                        <label>Chọn thiết bị *</label>
-
-                        <select name="device_id" required>
-                            <option value="">-- Chọn thiết bị --</option>
-
-                            <?php foreach ($devices as $device): ?>
-
-                                <option
-                                    value="<?= (int)$device["id"] ?>"
-                                    <?= $device["status"] !== "Đang sử dụng" ? "disabled" : "" ?>
-                                >
-                                    <?= maintenanceEscape($device["device_code"]) ?>
-                                    -
-                                    <?= maintenanceEscape($device["device_name"]) ?>
-                                    (<?= maintenanceEscape($device["status"]) ?>)
-                                </option>
-
-                            <?php endforeach; ?>
-
-                        </select>
-                    </div>
-
-                    <div class="maintenance-field">
-                        <label>Kỹ thuật viên</label>
-                        <input type="text" name="technician"
-                               placeholder="Tên kỹ thuật viên phụ trách">
-                    </div>
-
-                    <div class="maintenance-field full">
-                        <label>Nội dung / Sự cố cần bảo trì *</label>
-                        <textarea name="problem_description" required
-                                  placeholder="Mô tả tình trạng hoặc lỗi của thiết bị..."></textarea>
-                    </div>
-
-                    <div class="maintenance-field">
-                        <label>Ngày bắt đầu bảo trì *</label>
-                        <input type="date" name="maintenance_date"
-                               value="<?= date("Y-m-d") ?>" required>
-                    </div>
-
-                    <div class="maintenance-field">
-                        <label>Ngày dự kiến hoàn thành</label>
-                        <input type="date" name="expected_end_date">
-                    </div>
-
-                    <div class="maintenance-field">
-                        <label>Chi phí bảo trì (VNĐ)</label>
-                        <input type="number" name="maintenance_cost"
-                               min="0" step="1000" value="0">
-                    </div>
-
-                    <div class="maintenance-field">
-                        <label>Ghi chú</label>
-                        <input type="text" name="note"
-                               placeholder="Thông tin bổ sung...">
-                    </div>
-
-                </div>
-
-                <div class="maintenance-actions">
-
-                    <button type="submit"
-                            class="maintenance-btn maintenance-primary">
-                        TẠO PHIẾU BẢO TRÌ
-                    </button>
-
-                    <button type="reset"
-                            class="maintenance-btn maintenance-secondary">
-                        LÀM MỚI
-                    </button>
-
-                </div>
-
-            </form>
-
-        </section>
-
-    <?php endif; ?>
-
-    <section class="maintenance-panel">
-
-        <h3>DANH SÁCH PHIẾU BẢO TRÌ</h3>
-
-        <form method="GET" class="maintenance-search">
-
-            <input type="text" name="keyword"
-                   value="<?= maintenanceEscape($keyword) ?>"
-                   placeholder="Tìm mã thiết bị, tên thiết bị, nội dung hoặc kỹ thuật viên...">
-
-            <select name="status">
-                <option value="">Tất cả trạng thái</option>
-
-                <option value="Đang bảo trì"
-                    <?= $statusFilter === "Đang bảo trì" ? "selected" : "" ?>>
-                    Đang bảo trì
-                </option>
-
-                <option value="Đã hoàn thành"
-                    <?= $statusFilter === "Đã hoàn thành" ? "selected" : "" ?>>
-                    Đã hoàn thành
-                </option>
-            </select>
-
-            <button type="submit"
-                    class="maintenance-btn maintenance-primary">
-                TÌM KIẾM
-            </button>
-
-            <a href="/equip-control/maintenance.php"
-               class="maintenance-btn maintenance-secondary">
-                LÀM MỚI
-            </a>
-
-        </form>
-
-        <div class="maintenance-table-wrap">
-
-            <table class="maintenance-table">
-
-                <thead>
-                    <tr>
-                        <th>STT</th>
-                        <th>Mã phiếu</th>
-                        <th>Thiết bị</th>
-                        <th>Nội dung bảo trì</th>
-                        <th>Kỹ thuật viên</th>
-                        <th>Ngày bắt đầu</th>
-                        <th>Dự kiến hoàn thành</th>
-                        <th>Ngày hoàn thành</th>
-                        <th>Chi phí</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-
-                <?php if ($records): ?>
-
-                    <?php foreach ($records as $index => $record): ?>
-
-                        <?php
-                        $isOngoing = $record["status"] === "Đang bảo trì";
-                        ?>
-
-                        <tr>
-
-                            <td><?= $offset + $index + 1 ?></td>
-
-                            <td>#<?= (int)$record["id"] ?></td>
-
-                            <td>
-                                <?= maintenanceEscape($record["device_name"]) ?>
-                                <br>
-                                <small style="color:#91a6bd">
-                                    <?= maintenanceEscape($record["device_code"]) ?>
-                                </small>
-                            </td>
-
-                            <td>
-                                <?= maintenanceEscape($record["problem_description"]) ?>
-                            </td>
-
-                            <td>
-                                <?= maintenanceEscape($record["technician"] ?: "Chưa phân công") ?>
-                            </td>
-
-                            <td>
-                                <?= date("d/m/Y", strtotime($record["maintenance_date"])) ?>
-                            </td>
-
-                            <td>
-                                <?= $record["expected_end_date"]
-                                    ? date("d/m/Y", strtotime($record["expected_end_date"]))
-                                    : "Chưa xác định" ?>
-                            </td>
-
-                            <td>
-                                <?= $record["actual_end_date"]
-                                    ? date("d/m/Y", strtotime($record["actual_end_date"]))
-                                    : "Chưa hoàn thành" ?>
-                            </td>
-
-                            <td>
-                                <?= number_format((float)$record["maintenance_cost"], 0, ",", ".") ?> đ
-                            </td>
-
-                            <td>
-                                <span class="maintenance-status <?= $isOngoing ? "maintenance-ongoing" : "maintenance-done" ?>">
-                                    <?= maintenanceEscape($record["status"]) ?>
-                                </span>
-                            </td>
-
-                            <td>
-
-                                <?php if ($isOngoing): ?>
-
-                                    <div class="maintenance-actions">
-
-                                        <a class="maintenance-btn maintenance-edit"
-                                           href="?edit=<?= (int)$record["id"] ?>">
-                                            SỬA
-                                        </a>
-
-                                        <form method="POST"
-                                              onsubmit="return confirm('Xác nhận thiết bị đã hoàn thành bảo trì?');">
-
-                                            <input type="hidden" name="action"
-                                                   value="complete">
-
-                                            <input type="hidden" name="maintenance_id"
-                                                   value="<?= (int)$record["id"] ?>">
-
-                                            <input type="hidden" name="actual_end_date"
-                                                   value="<?= date("Y-m-d") ?>">
-
-                                            <button type="submit"
-                                                    class="maintenance-btn maintenance-complete">
-                                                HOÀN THÀNH
-                                            </button>
-
-                                        </form>
-
-                                    </div>
-
-                                <?php else: ?>
-
-                                    <span style="color:#86efac;font-size:12px">
-                                        Đã hoàn tất
-                                    </span>
-
-                                <?php endif; ?>
-
-                            </td>
-
-                        </tr>
-
-                    <?php endforeach; ?>
-
-                <?php else: ?>
-
-                    <tr>
-                        <td colspan="11" class="maintenance-empty">
-                            Chưa có phiếu bảo trì phù hợp.
-                        </td>
-                    </tr>
-
-                <?php endif; ?>
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        <?php if ($totalPages > 1): ?>
-
-            <div class="maintenance-pagination">
-
-                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-
-                    <?php
-                    $query = $_GET;
-                    $query["page"] = $i;
-                    unset($query["edit"]);
-                    ?>
-
-                    <a href="?<?= maintenanceEscape(http_build_query($query)) ?>"
-                       class="<?= $page === $i ? "current" : "" ?>">
-                        <?= $i ?>
-                    </a>
-
-                <?php endfor; ?>
-
+        <?php if ($message !== ""): ?>
+            <div class="maintenance-alert <?= maintenanceEscape($messageType) ?>">
+                <?= maintenanceEscape($message) ?>
             </div>
+        <?php endif; ?>
+
+        <div class="maintenance-stats">
+
+            <div class="maintenance-stat">
+                <span>Tổng phiếu bảo trì</span>
+                <strong><?= number_format($totalRecords) ?></strong>
+            </div>
+
+            <div class="maintenance-stat">
+                <span>Đang bảo trì</span>
+                <strong><?= number_format($totalOngoing) ?></strong>
+            </div>
+
+            <div class="maintenance-stat">
+                <span>Đã hoàn thành</span>
+                <strong><?= number_format($totalCompleted) ?></strong>
+            </div>
+
+            <div class="maintenance-stat">
+                <span>Tổng chi phí bảo trì</span>
+                <strong style="font-size:19px">
+                    <?= number_format($totalCost, 0, ",", ".") ?> đ
+                </strong>
+            </div>
+
+        </div>
+
+        <?php if ($editRecord): ?>
+
+            <section class="maintenance-panel">
+
+                <h3>CẬP NHẬT PHIẾU BẢO TRÌ #<?= (int)$editRecord["id"] ?></h3>
+
+                <form method="POST">
+
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="maintenance_id"
+                           value="<?= (int)$editRecord["id"] ?>">
+
+                    <div class="maintenance-form-grid">
+
+                        <div class="maintenance-field full">
+                            <label>Nội dung bảo trì *</label>
+                            <textarea name="problem_description" required><?= maintenanceEscape($editRecord["problem_description"]) ?></textarea>
+                        </div>
+
+                        <div class="maintenance-field">
+                            <label>Ngày dự kiến hoàn thành</label>
+                            <input type="date" name="expected_end_date"
+                                   value="<?= maintenanceEscape($editRecord["expected_end_date"]) ?>">
+                        </div>
+
+                        <div class="maintenance-field">
+                            <label>Chi phí bảo trì (VNĐ)</label>
+                            <input type="number" name="maintenance_cost"
+                                   min="0" step="1000"
+                                   value="<?= maintenanceEscape($editRecord["maintenance_cost"]) ?>">
+                        </div>
+
+                        <div class="maintenance-field">
+                            <label>Kỹ thuật viên</label>
+                            <input type="text" name="technician"
+                                   value="<?= maintenanceEscape($editRecord["technician"]) ?>">
+                        </div>
+
+                        <div class="maintenance-field">
+                            <label>Ghi chú</label>
+                            <input type="text" name="note"
+                                   value="<?= maintenanceEscape($editRecord["note"]) ?>">
+                        </div>
+
+                    </div>
+
+                    <div class="maintenance-actions">
+
+                        <button type="submit"
+                                class="maintenance-btn maintenance-primary">
+                            LƯU THAY ĐỔI
+                        </button>
+
+                        <a href="/maintenance.php"
+                           class="maintenance-btn maintenance-secondary">
+                            HỦY
+                        </a>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+        <?php else: ?>
+
+            <section class="maintenance-panel">
+
+                <h3>TẠO PHIẾU BẢO TRÌ MỚI</h3>
+
+                <form method="POST">
+
+                    <input type="hidden" name="action" value="add">
+
+                    <div class="maintenance-form-grid">
+
+                        <div class="maintenance-field">
+                            <label>Chọn thiết bị *</label>
+
+                            <select name="device_id" required>
+                                <option value="">-- Chọn thiết bị --</option>
+
+                                <?php foreach ($devices as $device): ?>
+
+                                    <option
+                                        value="<?= (int)$device["id"] ?>"
+                                        <?= $device["status"] !== "Đang sử dụng" ? "disabled" : "" ?>
+                                    >
+                                        <?= maintenanceEscape($device["device_code"]) ?>
+                                        -
+                                        <?= maintenanceEscape($device["device_name"]) ?>
+                                        (<?= maintenanceEscape($device["status"]) ?>)
+                                    </option>
+
+                                <?php endforeach; ?>
+
+                            </select>
+                        </div>
+
+                        <div class="maintenance-field">
+                            <label>Kỹ thuật viên</label>
+                            <input type="text" name="technician"
+                                   placeholder="Tên kỹ thuật viên phụ trách">
+                        </div>
+
+                        <div class="maintenance-field full">
+                            <label>Nội dung / Sự cố cần bảo trì *</label>
+                            <textarea name="problem_description" required
+                                      placeholder="Mô tả tình trạng hoặc lỗi của thiết bị..."></textarea>
+                        </div>
+
+                        <div class="maintenance-field">
+                            <label>Ngày bắt đầu bảo trì *</label>
+                            <input type="date" name="maintenance_date"
+                                   value="<?= date("Y-m-d") ?>" required>
+                        </div>
+
+                        <div class="maintenance-field">
+                            <label>Ngày dự kiến hoàn thành</label>
+                            <input type="date" name="expected_end_date">
+                        </div>
+
+                        <div class="maintenance-field">
+                            <label>Chi phí bảo trì (VNĐ)</label>
+                            <input type="number" name="maintenance_cost"
+                                   min="0" step="1000" value="0">
+                        </div>
+
+                        <div class="maintenance-field">
+                            <label>Ghi chú</label>
+                            <input type="text" name="note"
+                                   placeholder="Thông tin bổ sung...">
+                        </div>
+
+                    </div>
+
+                    <div class="maintenance-actions">
+
+                        <button type="submit"
+                                class="maintenance-btn maintenance-primary">
+                            TẠO PHIẾU BẢO TRÌ
+                        </button>
+
+                        <button type="reset"
+                                class="maintenance-btn maintenance-secondary">
+                            LÀM MỚI
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
 
         <?php endif; ?>
 
-        <p class="maintenance-note">
-            Hiển thị <?= count($records) ?> / <?= $filteredTotal ?> phiếu bảo trì.
-        </p>
+        <section class="maintenance-panel">
 
-    </section>
+            <h3>DANH SÁCH PHIẾU BẢO TRÌ</h3>
+
+            <form method="GET" class="maintenance-search">
+
+                <input type="text" name="keyword"
+                       value="<?= maintenanceEscape($keyword) ?>"
+                       placeholder="Tìm mã thiết bị, tên thiết bị, nội dung hoặc kỹ thuật viên...">
+
+                <select name="status">
+                    <option value="">Tất cả trạng thái</option>
+
+                    <option value="Đang bảo trì"
+                        <?= $statusFilter === "Đang bảo trì" ? "selected" : "" ?>>
+                        Đang bảo trì
+                    </option>
+
+                    <option value="Đã hoàn thành"
+                        <?= $statusFilter === "Đã hoàn thành" ? "selected" : "" ?>>
+                        Đã hoàn thành
+                    </option>
+                </select>
+
+                <button type="submit"
+                        class="maintenance-btn maintenance-primary">
+                    TÌM KIẾM
+                </button>
+
+                <a href="/maintenance.php"
+                   class="maintenance-btn maintenance-secondary">
+                    LÀM MỚI
+                </a>
+
+            </form>
+
+            <div class="maintenance-table-wrap">
+
+                <table class="maintenance-table">
+
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Mã phiếu</th>
+                            <th>Thiết bị</th>
+                            <th>Nội dung bảo trì</th>
+                            <th>Kỹ thuật viên</th>
+                            <th>Ngày bắt đầu</th>
+                            <th>Dự kiến hoàn thành</th>
+                            <th>Ngày hoàn thành</th>
+                            <th>Chi phí</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    <?php if ($records): ?>
+
+                        <?php foreach ($records as $index => $record): ?>
+
+                            <?php
+                            $isOngoing = $record["status"] === "Đang bảo trì";
+                            ?>
+
+                            <tr>
+
+                                <td><?= $offset + $index + 1 ?></td>
+
+                                <td>#<?= (int)$record["id"] ?></td>
+
+                                <td>
+                                    <?= maintenanceEscape($record["device_name"]) ?>
+                                    <br>
+                                    <small style="color:#91a6bd">
+                                        <?= maintenanceEscape($record["device_code"]) ?>
+                                    </small>
+                                </td>
+
+                                <td>
+                                    <?= maintenanceEscape($record["problem_description"]) ?>
+                                </td>
+
+                                <td>
+                                    <?= maintenanceEscape($record["technician"] ?: "Chưa phân công") ?>
+                                </td>
+
+                                <td>
+                                    <?= date("d/m/Y", strtotime($record["maintenance_date"])) ?>
+                                </td>
+
+                                <td>
+                                    <?= $record["expected_end_date"]
+                                        ? date("d/m/Y", strtotime($record["expected_end_date"]))
+                                        : "Chưa xác định" ?>
+                                </td>
+
+                                <td>
+                                    <?= $record["actual_end_date"]
+                                        ? date("d/m/Y", strtotime($record["actual_end_date"]))
+                                        : "Chưa hoàn thành" ?>
+                                </td>
+
+                                <td>
+                                    <?= number_format((float)$record["maintenance_cost"], 0, ",", ".") ?> đ
+                                </td>
+
+                                <td>
+                                    <span class="maintenance-status <?= $isOngoing ? "maintenance-ongoing" : "maintenance-done" ?>">
+                                        <?= maintenanceEscape($record["status"]) ?>
+                                    </span>
+                                </td>
+
+                                <td>
+
+                                    <?php if ($isOngoing): ?>
+
+                                        <div class="maintenance-actions">
+
+                                            <a class="maintenance-btn maintenance-edit"
+                                               href="?edit=<?= (int)$record["id"] ?>">
+                                                SỬA
+                                            </a>
+
+                                            <form method="POST"
+                                                  onsubmit="return confirm('Xác nhận thiết bị đã hoàn thành bảo trì?');">
+
+                                                <input type="hidden" name="action"
+                                                       value="complete">
+
+                                                <input type="hidden" name="maintenance_id"
+                                                       value="<?= (int)$record["id"] ?>">
+
+                                                <input type="hidden" name="actual_end_date"
+                                                       value="<?= date("Y-m-d") ?>">
+
+                                                <button type="submit"
+                                                        class="maintenance-btn maintenance-complete">
+                                                    HOÀN THÀNH
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    <?php else: ?>
+
+                                        <span style="color:#86efac;font-size:12px">
+                                            Đã hoàn tất
+                                        </span>
+
+                                    <?php endif; ?>
+
+                                </td>
+
+                            </tr>
+
+                        <?php endforeach; ?>
+
+                    <?php else: ?>
+
+                        <tr>
+                            <td colspan="11" class="maintenance-empty">
+                                Chưa có phiếu bảo trì phù hợp.
+                            </td>
+                        </tr>
+
+                    <?php endif; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <?php if ($totalPages > 1): ?>
+
+                <div class="maintenance-pagination">
+
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+
+                        <?php
+                        $query = $_GET;
+                        $query["page"] = $i;
+                        unset($query["edit"]);
+                        ?>
+
+                        <a href="?<?= maintenanceEscape(http_build_query($query)) ?>"
+                           class="<?= $page === $i ? "current" : "" ?>">
+                            <?= $i ?>
+                        </a>
+
+                    <?php endfor; ?>
+
+                </div>
+
+            <?php endif; ?>
+
+            <p class="maintenance-note">
+                Hiển thị <?= count($records) ?> / <?= $filteredTotal ?> phiếu bảo trì.
+            </p>
+
+        </section>
+
+    </div>
+    </main>
 
 </div>
-</main>
 
 </body>
 </html>
