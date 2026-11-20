@@ -10,23 +10,24 @@ function componentEscape($value) {
     return htmlspecialchars((string)($value ?? ""), ENT_QUOTES, "UTF-8");
 }
 
-$validStatuses = ["Đang sử dụng", "Ngừng sử dụng"];
 $message = "";
 $messageType = "success";
 
-// XỬ LÝ THÊM, SỬA, XÓA
+$validStatuses = ["Đang sử dụng", "Ngừng sử dụng"];
+
+// XỬ LÝ THÊM, SỬA, XÓA LINH KIỆN
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $action = $_POST["action"] ?? "";
 
     try {
-        if ($action === "add" || $action === "update") {
-            $id = (int)($_POST["id"] ?? 0);
+        // THÊM LINH KIỆN
+        if ($action === "add") {
             $code = trim($_POST["component_code"] ?? "");
             $name = trim($_POST["component_name"] ?? "");
             $category = trim($_POST["category"] ?? "");
             $quantity = (int)($_POST["quantity"] ?? 0);
-            $minQuantity = (int)($_POST["min_quantity"] ?? 5);
-            $unit = trim($_POST["unit"] ?? "Cái");
+            $minQuantity = (int)($_POST["min_quantity"] ?? 0);
+            $unit = trim($_POST["unit"] ?? "");
             $location = trim($_POST["location"] ?? "");
             $status = $_POST["status"] ?? "Đang sử dụng";
             $description = trim($_POST["description"] ?? "");
@@ -40,101 +41,158 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
 
             if (!in_array($status, $validStatuses, true)) {
-                throw new Exception("Trạng thái không hợp lệ.");
+                throw new Exception("Trạng thái linh kiện không hợp lệ.");
             }
 
-            if ($action === "add") {
-                $stmt = $conn->prepare("
-                    INSERT INTO components
-                    (component_code, component_name, category, quantity,
-                     min_quantity, unit, location, status, description)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ");
+            $stmt = $conn->prepare("
+                INSERT INTO components
+                (
+                    component_code,
+                    component_name,
+                    category,
+                    quantity,
+                    min_quantity,
+                    unit,
+                    location,
+                    status,
+                    description
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
 
-                $stmt->execute([
-                    $code, $name, $category, $quantity,
-                    $minQuantity, $unit, $location, $status, $description
-                ]);
+            $stmt->execute([
+                $code,
+                $name,
+                $category,
+                $quantity,
+                $minQuantity,
+                $unit,
+                $location,
+                $status,
+                $description
+            ]);
 
-                logActivity(
-                    $conn,
-                    "Thêm linh kiện",
-                    "Đã thêm linh kiện {$name}, mã {$code}, số lượng {$quantity} {$unit}."
-                );
+            $componentId = (int)$conn->lastInsertId();
 
-                $message = "Thêm linh kiện thành công!";
+            logActivity(
+                $conn,
+                "Thêm linh kiện",
+                "Thêm linh kiện {$name} (Mã: {$code}), số lượng: {$quantity} {$unit}."
+            );
 
-            } else {
-                $oldStmt = $conn->prepare("SELECT * FROM components WHERE id = ?");
-                $oldStmt->execute([$id]);
-                $old = $oldStmt->fetch();
+            $message = "Thêm linh kiện thành công!";
 
-                if (!$old) {
-                    throw new Exception("Không tìm thấy linh kiện cần sửa.");
-                }
+        // CẬP NHẬT LINH KIỆN
+        } elseif ($action === "update") {
+            $id = (int)($_POST["id"] ?? 0);
+            $code = trim($_POST["component_code"] ?? "");
+            $name = trim($_POST["component_name"] ?? "");
+            $category = trim($_POST["category"] ?? "");
+            $quantity = (int)($_POST["quantity"] ?? 0);
+            $minQuantity = (int)($_POST["min_quantity"] ?? 0);
+            $unit = trim($_POST["unit"] ?? "");
+            $location = trim($_POST["location"] ?? "");
+            $status = $_POST["status"] ?? "";
+            $description = trim($_POST["description"] ?? "");
 
-                $stmt = $conn->prepare("
-                    UPDATE components SET
-                        component_code = ?,
-                        component_name = ?,
-                        category = ?,
-                        quantity = ?,
-                        min_quantity = ?,
-                        unit = ?,
-                        location = ?,
-                        status = ?,
-                        description = ?
-                    WHERE id = ?
-                ");
-
-                $stmt->execute([
-                    $code, $name, $category, $quantity,
-                    $minQuantity, $unit, $location, $status,
-                    $description, $id
-                ]);
-
-                logActivity(
-                    $conn,
-                    "Sửa linh kiện",
-                    "Đã cập nhật linh kiện {$name}, mã {$code}, ID {$id}."
-                );
-
-                $message = "Cập nhật linh kiện thành công!";
+            if ($id <= 0) {
+                throw new Exception("Linh kiện cần sửa không hợp lệ.");
             }
 
+            if ($code === "" || $name === "") {
+                throw new Exception("Vui lòng nhập mã và tên linh kiện.");
+            }
+
+            if ($quantity < 0 || $minQuantity < 0) {
+                throw new Exception("Số lượng không được nhỏ hơn 0.");
+            }
+
+            if (!in_array($status, $validStatuses, true)) {
+                throw new Exception("Trạng thái linh kiện không hợp lệ.");
+            }
+
+            $stmt = $conn->prepare("
+                UPDATE components
+                SET
+                    component_code = ?,
+                    component_name = ?,
+                    category = ?,
+                    quantity = ?,
+                    min_quantity = ?,
+                    unit = ?,
+                    location = ?,
+                    status = ?,
+                    description = ?
+                WHERE id = ?
+            ");
+
+            $stmt->execute([
+                $code,
+                $name,
+                $category,
+                $quantity,
+                $minQuantity,
+                $unit,
+                $location,
+                $status,
+                $description,
+                $id
+            ]);
+
+            logActivity(
+                $conn,
+                "Cập nhật linh kiện",
+                "Cập nhật linh kiện {$name} (Mã: {$code}), số lượng: {$quantity} {$unit}."
+            );
+
+            $message = "Cập nhật linh kiện thành công!";
+
+        // XÓA LINH KIỆN
         } elseif ($action === "delete") {
             $id = (int)($_POST["id"] ?? 0);
 
-            $oldStmt = $conn->prepare("SELECT * FROM components WHERE id = ?");
-            $oldStmt->execute([$id]);
-            $old = $oldStmt->fetch();
+            if ($id <= 0) {
+                throw new Exception("Linh kiện cần xóa không hợp lệ.");
+            }
 
-            if (!$old) {
+            $stmt = $conn->prepare("
+                SELECT component_code, component_name
+                FROM components
+                WHERE id = ?
+            ");
+            $stmt->execute([$id]);
+            $component = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$component) {
                 throw new Exception("Không tìm thấy linh kiện cần xóa.");
             }
 
-            $stmt = $conn->prepare("DELETE FROM components WHERE id = ?");
+            $stmt = $conn->prepare("
+                DELETE FROM components
+                WHERE id = ?
+            ");
             $stmt->execute([$id]);
 
             logActivity(
                 $conn,
                 "Xóa linh kiện",
-                "Đã xóa linh kiện {$old['component_name']}, mã {$old['component_code']}."
+                "Đã xóa linh kiện {$component['component_name']} (Mã: {$component['component_code']})."
             );
 
             $message = "Xóa linh kiện thành công!";
+
+        } else {
+            throw new Exception("Thao tác không hợp lệ.");
         }
 
     } catch (PDOException $e) {
-        $messageType = "error";
-
         if ($e->getCode() === "23000") {
-            $message = $action === "delete"
-                ? "Không thể xóa linh kiện vì đã có lịch sử nhập xuất kho."
-                : "Mã linh kiện đã tồn tại. Hãy nhập mã khác.";
+            $message = "Không thể thực hiện thao tác. Mã linh kiện có thể đã tồn tại hoặc linh kiện đang được sử dụng trong dữ liệu khác.";
         } else {
             $message = "Có lỗi cơ sở dữ liệu. Vui lòng kiểm tra lại.";
         }
+
+        $messageType = "error";
 
     } catch (Exception $e) {
         $message = $e->getMessage();
@@ -142,14 +200,41 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-// LẤY DỮ LIỆU CHỈNH SỬA
+// LẤY LINH KIỆN CẦN CHỈNH SỬA
 $editComponent = null;
+$editId = (int)($_GET["edit"] ?? 0);
 
-if (isset($_GET["edit"])) {
-    $stmt = $conn->prepare("SELECT * FROM components WHERE id = ?");
-    $stmt->execute([(int)$_GET["edit"]]);
-    $editComponent = $stmt->fetch();
+if ($editId > 0) {
+    $editStmt = $conn->prepare("
+        SELECT *
+        FROM components
+        WHERE id = ?
+    ");
+    $editStmt->execute([$editId]);
+    $editComponent = $editStmt->fetch(PDO::FETCH_ASSOC);
 }
+
+// THỐNG KÊ
+$totalComponents = (int)$conn->query("
+    SELECT COUNT(*) FROM components
+")->fetchColumn();
+
+$totalQuantity = (int)$conn->query("
+    SELECT COALESCE(SUM(quantity), 0)
+    FROM components
+")->fetchColumn();
+
+$lowStock = (int)$conn->query("
+    SELECT COUNT(*)
+    FROM components
+    WHERE quantity <= min_quantity
+")->fetchColumn();
+
+$activeComponents = (int)$conn->query("
+    SELECT COUNT(*)
+    FROM components
+    WHERE status = 'Đang sử dụng'
+")->fetchColumn();
 
 // TÌM KIẾM VÀ LỌC
 $keyword = trim($_GET["keyword"] ?? "");
@@ -160,9 +245,22 @@ $where = [];
 $params = [];
 
 if ($keyword !== "") {
-    $where[] = "(component_code LIKE ? OR component_name LIKE ? OR category LIKE ? OR location LIKE ?)";
+    $where[] = "(
+        component_code LIKE ?
+        OR component_name LIKE ?
+        OR category LIKE ?
+        OR location LIKE ?
+    )";
+
     $search = "%{$keyword}%";
-    array_push($params, $search, $search, $search, $search);
+
+    array_push(
+        $params,
+        $search,
+        $search,
+        $search,
+        $search
+    );
 }
 
 if (in_array($statusFilter, $validStatuses, true)) {
@@ -178,41 +276,35 @@ if ($stockFilter === "low") {
 
 $whereSQL = $where ? "WHERE " . implode(" AND ", $where) : "";
 
-// THỐNG KÊ
-$totalComponents = (int)$conn->query("SELECT COUNT(*) FROM components")->fetchColumn();
-
-$totalQuantity = (int)$conn->query("
-    SELECT COALESCE(SUM(quantity), 0) FROM components
-")->fetchColumn();
-
-$lowStockCount = (int)$conn->query("
-    SELECT COUNT(*) FROM components WHERE quantity <= min_quantity
-")->fetchColumn();
-
-$activeCount = (int)$conn->query("
-    SELECT COUNT(*) FROM components WHERE status = 'Đang sử dụng'
-")->fetchColumn();
-
 // PHÂN TRANG
 $perPage = 10;
 $page = max(1, (int)($_GET["page"] ?? 1));
 
-$countStmt = $conn->prepare("SELECT COUNT(*) FROM components $whereSQL");
+$countStmt = $conn->prepare("
+    SELECT COUNT(*)
+    FROM components
+    $whereSQL
+");
 $countStmt->execute($params);
+
 $filteredTotal = (int)$countStmt->fetchColumn();
 
 $totalPages = max(1, (int)ceil($filteredTotal / $perPage));
 $page = min($page, $totalPages);
 $offset = ($page - 1) * $perPage;
 
+// DANH SÁCH LINH KIỆN
 $stmt = $conn->prepare("
-    SELECT * FROM components
+    SELECT *
+    FROM components
     $whereSQL
     ORDER BY id DESC
     LIMIT $perPage OFFSET $offset
 ");
 $stmt->execute($params);
-$components = $stmt->fetchAll();
+$components = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$isEditing = $editComponent !== false && $editComponent !== null;
 ?>
 
 <!DOCTYPE html>
@@ -222,7 +314,7 @@ $components = $stmt->fetchAll();
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Quản lý linh kiện - EQUIP CONTROL</title>
 
-<link rel="stylesheet" href="/equip-control/assets/css/unified.css">
+<link rel="stylesheet" href="/assets/css/style.css?v=14">
 
 <style>
 * {
@@ -233,11 +325,23 @@ html, body {
     margin: 0;
     padding: 0;
     min-height: 100%;
-    background: #0b1120;
+    background: #0b1120 !important;
     color: #e5edf8;
 }
 
-/* SIDEBAR CỐ ĐỊNH BÊN TRÁI */
+body {
+    display: block !important;
+    overflow-x: hidden;
+}
+
+/* BỐ CỤC CHUNG */
+.page-container {
+    display: block !important;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* SIDEBAR */
 .sidebar {
     position: fixed !important;
     top: 0 !important;
@@ -250,7 +354,7 @@ html, body {
     margin: 0 !important;
 }
 
-/* NỘI DUNG LUÔN NẰM BÊN PHẢI SIDEBAR */
+/* KHU VỰC NỘI DUNG */
 .main-content {
     position: relative !important;
     display: block !important;
@@ -260,6 +364,7 @@ html, body {
     min-width: 0 !important;
     min-height: 100vh;
     padding: 0 !important;
+    background: #0b1120 !important;
     box-sizing: border-box !important;
 }
 
@@ -269,7 +374,6 @@ html, body {
     min-width: 0;
     padding: 25px;
     margin: 0;
-    box-sizing: border-box;
 }
 
 .component-heading {
@@ -300,15 +404,19 @@ html, body {
 }
 
 .component-stat span {
+    display: block;
     color: #91a6bd;
     font-size: 12px;
-    display: block;
     margin-bottom: 10px;
 }
 
 .component-stat strong {
     color: #22d3ee;
     font-size: 25px;
+}
+
+.component-stat.warning strong {
+    color: #fbbf24;
 }
 
 .component-panel {
@@ -398,22 +506,22 @@ html, body {
     font-weight: 600;
 }
 
-.btn-primary {
+.component-btn-primary {
     background: #0891b2;
     color: white;
 }
 
-.btn-secondary {
+.component-btn-secondary {
     background: #30445c;
     color: white;
 }
 
-.btn-edit {
-    background: #174b72;
-    color: #bae6fd;
+.component-btn-edit {
+    background: #1d4ed8;
+    color: white;
 }
 
-.btn-delete {
+.component-btn-delete {
     background: #7f1d1d;
     color: #fecaca;
 }
@@ -448,7 +556,7 @@ html, body {
 
 .component-table {
     width: 100%;
-    min-width: 900px;
+    min-width: 1050px;
     border-collapse: collapse;
     white-space: nowrap;
 }
@@ -472,29 +580,31 @@ html, body {
     background: rgba(34, 211, 238, .04);
 }
 
-.component-status,
-.stock-status {
+.component-status {
     display: inline-block;
-    padding: 5px 8px;
+    padding: 5px 9px;
     border-radius: 20px;
-    font-size: 10px;
-    white-space: nowrap;
+    font-size: 11px;
 }
 
-.status-active,
-.stock-normal {
+.component-active {
     background: #123c32;
     color: #86efac;
 }
 
-.status-inactive {
-    background: #45252d;
-    color: #fca5a5;
-}
-
-.stock-low {
+.component-inactive {
     background: #49371e;
     color: #fcd34d;
+}
+
+.component-low {
+    color: #fbbf24 !important;
+    font-weight: 600;
+}
+
+.component-normal {
+    color: #86efac !important;
+    font-weight: 600;
 }
 
 .component-alert {
@@ -544,6 +654,17 @@ html, body {
     color: #91a6bd !important;
 }
 
+.component-note {
+    color: #91a6bd;
+    font-size: 12px;
+    margin-top: 14px;
+}
+
+.component-small {
+    color: #91a6bd;
+    font-size: 11px;
+}
+
 @media(max-width: 950px) {
     .component-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -576,281 +697,379 @@ html, body {
 
 <body>
 
-<?php require __DIR__ . "/includes/sidebar.php"; ?>
+<div class="page-container">
 
-<main class="main-content">
-<div class="component-content">
+    <?php require __DIR__ . "/includes/sidebar.php"; ?>
 
-    <h1 class="component-heading">QUẢN LÝ LINH KIỆN</h1>
-    <p class="component-subtitle">
-        Theo dõi số lượng, tình trạng và thông tin linh kiện trong kho.
-    </p>
+    <main class="main-content">
+    <div class="component-content">
 
-    <?php if ($message !== ""): ?>
-        <div class="component-alert <?= componentEscape($messageType) ?>">
-            <?= componentEscape($message) ?>
-        </div>
-    <?php endif; ?>
+        <h1 class="component-heading">QUẢN LÝ LINH KIỆN</h1>
 
-    <div class="component-stats">
-        <div class="component-stat">
-            <span>Tổng loại linh kiện</span>
-            <strong><?= number_format($totalComponents) ?></strong>
-        </div>
+        <p class="component-subtitle">
+            Quản lý thông tin, số lượng, vị trí lưu trữ và tình trạng tồn kho linh kiện.
+        </p>
 
-        <div class="component-stat">
-            <span>Tổng số lượng tồn</span>
-            <strong><?= number_format($totalQuantity) ?></strong>
-        </div>
-
-        <div class="component-stat">
-            <span>Linh kiện sắp hết</span>
-            <strong><?= number_format($lowStockCount) ?></strong>
-        </div>
-
-        <div class="component-stat">
-            <span>Đang sử dụng</span>
-            <strong><?= number_format($activeCount) ?></strong>
-        </div>
-    </div>
-
-    <section class="component-panel">
-        <h3>
-            <?= $editComponent ? "CẬP NHẬT LINH KIỆN" : "THÊM LINH KIỆN MỚI" ?>
-        </h3>
-
-        <form method="POST">
-            <input type="hidden" name="action"
-                   value="<?= $editComponent ? "update" : "add" ?>">
-
-            <?php if ($editComponent): ?>
-                <input type="hidden" name="id"
-                       value="<?= (int)$editComponent["id"] ?>">
-            <?php endif; ?>
-
-            <div class="component-form-grid">
-
-                <div class="component-field">
-                    <label>Mã linh kiện *</label>
-                    <input type="text" name="component_code" required
-                        value="<?= componentEscape($editComponent["component_code"] ?? "") ?>"
-                        placeholder="Ví dụ: LK001">
-                </div>
-
-                <div class="component-field">
-                    <label>Tên linh kiện *</label>
-                    <input type="text" name="component_name" required
-                        value="<?= componentEscape($editComponent["component_name"] ?? "") ?>"
-                        placeholder="Nhập tên linh kiện">
-                </div>
-
-                <div class="component-field">
-                    <label>Danh mục</label>
-                    <input type="text" name="category"
-                        value="<?= componentEscape($editComponent["category"] ?? "") ?>"
-                        placeholder="Ví dụ: Điện trở, tụ điện...">
-                </div>
-
-                <div class="component-field">
-                    <label>Số lượng tồn kho</label>
-                    <input type="number" name="quantity" min="0"
-                        value="<?= componentEscape($editComponent["quantity"] ?? 0) ?>">
-                </div>
-
-                <div class="component-field">
-                    <label>Số lượng tối thiểu</label>
-                    <input type="number" name="min_quantity" min="0"
-                        value="<?= componentEscape($editComponent["min_quantity"] ?? 5) ?>">
-                </div>
-
-                <div class="component-field">
-                    <label>Đơn vị</label>
-                    <input type="text" name="unit"
-                        value="<?= componentEscape($editComponent["unit"] ?? "Cái") ?>"
-                        placeholder="Cái, Bộ, Chiếc...">
-                </div>
-
-                <div class="component-field">
-                    <label>Vị trí lưu trữ</label>
-                    <input type="text" name="location"
-                        value="<?= componentEscape($editComponent["location"] ?? "") ?>"
-                        placeholder="Ví dụ: Kệ A, Ngăn B...">
-                </div>
-
-                <div class="component-field">
-                    <label>Trạng thái</label>
-                    <select name="status">
-                        <?php
-                        $currentStatus = $editComponent["status"] ?? "Đang sử dụng";
-                        foreach ($validStatuses as $status):
-                        ?>
-                            <option value="<?= componentEscape($status) ?>"
-                                <?= $currentStatus === $status ? "selected" : "" ?>>
-                                <?= componentEscape($status) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="component-field full">
-                    <label>Mô tả</label>
-                    <textarea name="description"
-                        placeholder="Nhập thông tin mô tả..."><?= componentEscape($editComponent["description"] ?? "") ?></textarea>
-                </div>
-
-            </div>
-
-            <div class="component-actions">
-                <button type="submit" class="component-btn btn-primary">
-                    <?= $editComponent ? "LƯU CẬP NHẬT" : "THÊM LINH KIỆN" ?>
-                </button>
-
-                <?php if ($editComponent): ?>
-                    <a href="/equip-control/components.php"
-                       class="component-btn btn-secondary">
-                        HỦY CHỈNH SỬA
-                    </a>
-                <?php endif; ?>
-            </div>
-        </form>
-    </section>
-
-    <section class="component-panel">
-        <h3>DANH SÁCH LINH KIỆN</h3>
-
-        <form method="GET" class="component-search">
-            <input type="text" name="keyword"
-                value="<?= componentEscape($keyword) ?>"
-                placeholder="Tìm mã, tên, danh mục hoặc vị trí...">
-
-            <select name="status">
-                <option value="">Tất cả trạng thái</option>
-                <?php foreach ($validStatuses as $status): ?>
-                    <option value="<?= componentEscape($status) ?>"
-                        <?= $statusFilter === $status ? "selected" : "" ?>>
-                        <?= componentEscape($status) ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-
-            <select name="stock">
-                <option value="">Tất cả tồn kho</option>
-                <option value="low" <?= $stockFilter === "low" ? "selected" : "" ?>>
-                    Sắp hết hàng
-                </option>
-                <option value="normal" <?= $stockFilter === "normal" ? "selected" : "" ?>>
-                    Còn hàng
-                </option>
-            </select>
-
-            <button type="submit" class="component-btn btn-primary">
-                TÌM KIẾM
-            </button>
-
-            <a href="/equip-control/components.php"
-               class="component-btn btn-secondary">
-                LÀM MỚI
-            </a>
-        </form>
-
-        <div class="component-table-wrap">
-            <table class="component-table">
-                <thead>
-                    <tr>
-                        <th>STT</th>
-                        <th>Mã linh kiện</th>
-                        <th>Tên linh kiện</th>
-                        <th>Danh mục</th>
-                        <th>Số lượng</th>
-                        <th>Mức tối thiểu</th>
-                        <th>Vị trí</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                <?php if ($components): ?>
-                    <?php foreach ($components as $index => $component): ?>
-                        <?php
-                        $isLow = (int)$component["quantity"] <= (int)$component["min_quantity"];
-                        $isActive = $component["status"] === "Đang sử dụng";
-                        ?>
-
-                        <tr>
-                            <td><?= $offset + $index + 1 ?></td>
-                            <td><?= componentEscape($component["component_code"]) ?></td>
-                            <td><?= componentEscape($component["component_name"]) ?></td>
-                            <td><?= componentEscape($component["category"]) ?></td>
-                            <td>
-                                <?= number_format((int)$component["quantity"]) ?>
-                                <?= componentEscape($component["unit"]) ?>
-                            </td>
-                            <td><?= number_format((int)$component["min_quantity"]) ?></td>
-                            <td><?= componentEscape($component["location"]) ?></td>
-                            <td>
-                                <span class="stock-status <?= $isLow ? "stock-low" : "stock-normal" ?>">
-                                    <?= $isLow ? "Sắp hết hàng" : "Đủ hàng" ?>
-                                </span>
-                                <br>
-                                <span class="component-status <?= $isActive ? "status-active" : "status-inactive" ?>">
-                                    <?= componentEscape($component["status"]) ?>
-                                </span>
-                            </td>
-                            <td>
-                                <div class="component-actions">
-                                    <a class="component-btn btn-edit"
-                                       href="?edit=<?= (int)$component["id"] ?>">
-                                        Sửa
-                                    </a>
-
-                                    <form method="POST"
-                                        onsubmit="return confirm('Mày có chắc chắn muốn xóa linh kiện này không?');">
-                                        <input type="hidden" name="action" value="delete">
-                                        <input type="hidden" name="id"
-                                               value="<?= (int)$component["id"] ?>">
-                                        <button type="submit"
-                                            class="component-btn btn-delete">
-                                            Xóa
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="9" class="component-empty">
-                            Không tìm thấy linh kiện phù hợp.
-                        </td>
-                    </tr>
-                <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-
-        <?php if ($totalPages > 1): ?>
-            <div class="component-pagination">
-                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                    <?php
-                    $query = $_GET;
-                    $query["page"] = $i;
-                    ?>
-                    <a href="?<?= componentEscape(http_build_query($query)) ?>"
-                       class="<?= $page === $i ? "current" : "" ?>">
-                        <?= $i ?>
-                    </a>
-                <?php endfor; ?>
+        <?php if ($message !== ""): ?>
+            <div class="component-alert <?= componentEscape($messageType) ?>">
+                <?= componentEscape($message) ?>
             </div>
         <?php endif; ?>
 
-        <p style="color:#91a6bd;font-size:12px;margin-top:15px;">
-            Hiển thị <?= count($components) ?> / <?= $filteredTotal ?> linh kiện.
-        </p>
-    </section>
+        <div class="component-stats">
+
+            <div class="component-stat">
+                <span>Tổng số linh kiện</span>
+                <strong><?= number_format($totalComponents) ?></strong>
+            </div>
+
+            <div class="component-stat">
+                <span>Tổng số lượng tồn</span>
+                <strong><?= number_format($totalQuantity) ?></strong>
+            </div>
+
+            <div class="component-stat warning">
+                <span>Linh kiện sắp hết</span>
+                <strong><?= number_format($lowStock) ?></strong>
+            </div>
+
+            <div class="component-stat">
+                <span>Linh kiện đang sử dụng</span>
+                <strong><?= number_format($activeComponents) ?></strong>
+            </div>
+
+        </div>
+
+        <section class="component-panel">
+
+            <h3>
+                <?= $isEditing ? "CHỈNH SỬA THÔNG TIN LINH KIỆN" : "THÊM LINH KIỆN MỚI" ?>
+            </h3>
+
+            <form method="POST">
+
+                <input type="hidden"
+                       name="action"
+                       value="<?= $isEditing ? "update" : "add" ?>">
+
+                <?php if ($isEditing): ?>
+                    <input type="hidden"
+                           name="id"
+                           value="<?= (int)$editComponent["id"] ?>">
+                <?php endif; ?>
+
+                <div class="component-form-grid">
+
+                    <div class="component-field">
+                        <label>Mã linh kiện *</label>
+                        <input type="text"
+                               name="component_code"
+                               required
+                               placeholder="Nhập mã linh kiện"
+                               value="<?= $isEditing ? componentEscape($editComponent["component_code"]) : "" ?>">
+                    </div>
+
+                    <div class="component-field">
+                        <label>Tên linh kiện *</label>
+                        <input type="text"
+                               name="component_name"
+                               required
+                               placeholder="Nhập tên linh kiện"
+                               value="<?= $isEditing ? componentEscape($editComponent["component_name"]) : "" ?>">
+                    </div>
+
+                    <div class="component-field">
+                        <label>Danh mục</label>
+                        <input type="text"
+                               name="category"
+                               placeholder="Nhập danh mục linh kiện"
+                               value="<?= $isEditing ? componentEscape($editComponent["category"]) : "" ?>">
+                    </div>
+
+                    <div class="component-field">
+                        <label>Số lượng hiện có *</label>
+                        <input type="number"
+                               name="quantity"
+                               min="0"
+                               required
+                               value="<?= $isEditing ? (int)$editComponent["quantity"] : "0" ?>">
+                    </div>
+
+                    <div class="component-field">
+                        <label>Số lượng tối thiểu *</label>
+                        <input type="number"
+                               name="min_quantity"
+                               min="0"
+                               required
+                               value="<?= $isEditing ? (int)$editComponent["min_quantity"] : "0" ?>">
+                    </div>
+
+                    <div class="component-field">
+                        <label>Đơn vị tính</label>
+                        <input type="text"
+                               name="unit"
+                               placeholder="Ví dụ: Cái, chiếc, bộ..."
+                               value="<?= $isEditing ? componentEscape($editComponent["unit"]) : "" ?>">
+                    </div>
+
+                    <div class="component-field">
+                        <label>Vị trí lưu trữ</label>
+                        <input type="text"
+                               name="location"
+                               placeholder="Nhập vị trí lưu trữ"
+                               value="<?= $isEditing ? componentEscape($editComponent["location"]) : "" ?>">
+                    </div>
+
+                    <div class="component-field">
+                        <label>Trạng thái</label>
+                        <select name="status">
+                            <option value="Đang sử dụng"
+                                <?= !$isEditing || $editComponent["status"] === "Đang sử dụng" ? "selected" : "" ?>>
+                                Đang sử dụng
+                            </option>
+
+                            <option value="Ngừng sử dụng"
+                                <?= $isEditing && $editComponent["status"] === "Ngừng sử dụng" ? "selected" : "" ?>>
+                                Ngừng sử dụng
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="component-field full">
+                        <label>Mô tả</label>
+                        <textarea name="description"
+                                  placeholder="Nhập thông tin mô tả linh kiện..."><?= $isEditing ? componentEscape($editComponent["description"]) : "" ?></textarea>
+                    </div>
+
+                </div>
+
+                <div class="component-actions">
+
+                    <button type="submit" class="component-btn component-btn-primary">
+                        <?= $isEditing ? "CẬP NHẬT LINH KIỆN" : "THÊM LINH KIỆN" ?>
+                    </button>
+
+                    <?php if ($isEditing): ?>
+                        <a href="/components.php"
+                           class="component-btn component-btn-secondary">
+                            HỦY CHỈNH SỬA
+                        </a>
+                    <?php endif; ?>
+
+                </div>
+
+            </form>
+
+        </section>
+
+        <section class="component-panel">
+
+            <h3>DANH SÁCH LINH KIỆN</h3>
+
+            <form method="GET" class="component-search">
+
+                <input type="text"
+                       name="keyword"
+                       value="<?= componentEscape($keyword) ?>"
+                       placeholder="Tìm mã, tên, danh mục hoặc vị trí linh kiện...">
+
+                <select name="status">
+                    <option value="">Tất cả trạng thái</option>
+
+                    <option value="Đang sử dụng"
+                        <?= $statusFilter === "Đang sử dụng" ? "selected" : "" ?>>
+                        Đang sử dụng
+                    </option>
+
+                    <option value="Ngừng sử dụng"
+                        <?= $statusFilter === "Ngừng sử dụng" ? "selected" : "" ?>>
+                        Ngừng sử dụng
+                    </option>
+                </select>
+
+                <select name="stock">
+                    <option value="">Tất cả tồn kho</option>
+
+                    <option value="low"
+                        <?= $stockFilter === "low" ? "selected" : "" ?>>
+                        Sắp hết hàng
+                    </option>
+
+                    <option value="normal"
+                        <?= $stockFilter === "normal" ? "selected" : "" ?>>
+                        Tồn kho bình thường
+                    </option>
+                </select>
+
+                <button type="submit" class="component-btn component-btn-primary">
+                    TÌM KIẾM
+                </button>
+
+                <a href="/components.php"
+                   class="component-btn component-btn-secondary">
+                    LÀM MỚI
+                </a>
+
+            </form>
+
+            <div class="component-table-wrap">
+
+                <table class="component-table">
+
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Mã linh kiện</th>
+                            <th>Tên linh kiện</th>
+                            <th>Danh mục</th>
+                            <th>Số lượng</th>
+                            <th>Tối thiểu</th>
+                            <th>Vị trí</th>
+                            <th>Tồn kho</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    <?php if ($components): ?>
+
+                        <?php foreach ($components as $index => $component): ?>
+
+                            <?php
+                            $isLowStock = (int)$component["quantity"]
+                                <= (int)$component["min_quantity"];
+
+                            $isActive = $component["status"] === "Đang sử dụng";
+                            ?>
+
+                            <tr>
+
+                                <td><?= $offset + $index + 1 ?></td>
+
+                                <td>
+                                    <?= componentEscape($component["component_code"]) ?>
+                                </td>
+
+                                <td>
+                                    <?= componentEscape($component["component_name"]) ?>
+                                </td>
+
+                                <td>
+                                    <?= componentEscape($component["category"]) ?>
+                                </td>
+
+                                <td>
+                                    <?= number_format((int)$component["quantity"]) ?>
+                                    <?= componentEscape($component["unit"]) ?>
+                                </td>
+
+                                <td>
+                                    <?= number_format((int)$component["min_quantity"]) ?>
+                                    <?= componentEscape($component["unit"]) ?>
+                                </td>
+
+                                <td>
+                                    <?= componentEscape($component["location"]) ?>
+                                </td>
+
+                                <td>
+                                    <span class="<?= $isLowStock ? "component-low" : "component-normal" ?>">
+                                        <?= $isLowStock ? "Sắp hết" : "Bình thường" ?>
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="component-status <?= $isActive ? "component-active" : "component-inactive" ?>">
+                                        <?= componentEscape($component["status"]) ?>
+                                    </span>
+                                </td>
+
+                                <td>
+
+                                    <div class="component-actions" style="margin:0;flex-wrap:nowrap;">
+
+                                        <a href="?edit=<?= (int)$component["id"] ?>"
+                                           class="component-btn component-btn-edit">
+                                            SỬA
+                                        </a>
+
+                                        <form method="POST"
+                                              onsubmit="return confirm('Bạn có chắc chắn muốn xóa linh kiện này?');">
+
+                                            <input type="hidden"
+                                                   name="action"
+                                                   value="delete">
+
+                                            <input type="hidden"
+                                                   name="id"
+                                                   value="<?= (int)$component["id"] ?>">
+
+                                            <button type="submit"
+                                                    class="component-btn component-btn-delete">
+                                                XÓA
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        <?php endforeach; ?>
+
+                    <?php else: ?>
+
+                        <tr>
+                            <td colspan="10" class="component-empty">
+                                Chưa có linh kiện phù hợp.
+                            </td>
+                        </tr>
+
+                    <?php endif; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <?php if ($totalPages > 1): ?>
+
+                <div class="component-pagination">
+
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+
+                        <?php
+                        $query = $_GET;
+                        unset($query["edit"]);
+                        $query["page"] = $i;
+                        ?>
+
+                        <a href="?<?= componentEscape(http_build_query($query)) ?>"
+                           class="<?= $page === $i ? "current" : "" ?>">
+                            <?= $i ?>
+                        </a>
+
+                    <?php endfor; ?>
+
+                </div>
+
+            <?php endif; ?>
+
+            <p class="component-note">
+                Hiển thị <?= count($components) ?> / <?= $filteredTotal ?> linh kiện.
+            </p>
+
+        </section>
+
+    </div>
+    </main>
 
 </div>
-</main>
 
 </body>
 </html>
